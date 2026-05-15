@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using SkiaSharp;
 
 namespace DrawRightNow.Rendering;
@@ -10,13 +11,13 @@ namespace DrawRightNow.Rendering;
 /// </summary>
 internal sealed class SkiaPaintPool
 {
-    private readonly Dictionary<int, SKPaint> _pool = new();
+    private readonly Dictionary<int, SKPaint> _strokePool = new();
+    private readonly Dictionary<int, SKPaint> _fillPool = new();
 
-    public SKPaint Get(SKColor color, float width, bool antialias, SKBlendMode blend, SKStrokeCap cap)
+    public SKPaint GetStroke(SKColor color, float width, bool antialias, SKBlendMode blend, SKStrokeCap cap)
     {
-        // Композитный ключ — порядка двух десятков уникальных вариантов на сессию
         var key = HashCode.Combine((int)(uint)color, width, antialias, (int)blend, (int)cap);
-        if (!_pool.TryGetValue(key, out var paint))
+        if (!_strokePool.TryGetValue(key, out var paint))
         {
             paint = new SKPaint
             {
@@ -28,7 +29,7 @@ internal sealed class SkiaPaintPool
                 StrokeJoin = SKStrokeJoin.Round,
                 BlendMode = blend
             };
-            _pool[key] = paint;
+            _strokePool[key] = paint;
         }
         else
         {
@@ -41,9 +42,40 @@ internal sealed class SkiaPaintPool
         return paint;
     }
 
+    public SKPaint GetFill(SKColor color, bool antialias, SKBlendMode blend = SKBlendMode.SrcOver)
+    {
+        var key = HashCode.Combine((int)(uint)color, antialias, (int)blend);
+        if (!_fillPool.TryGetValue(key, out var paint))
+        {
+            paint = new SKPaint
+            {
+                Style = SKPaintStyle.Fill,
+                IsAntialias = antialias,
+                Color = color,
+                BlendMode = blend
+            };
+            _fillPool[key] = paint;
+        }
+        else
+        {
+            paint.Color = color;
+            paint.IsAntialias = antialias;
+            paint.BlendMode = blend;
+        }
+        return paint;
+    }
+
+    /// <summary>
+    /// Совместимость со старыми вызовами — алиас на GetStroke
+    /// </summary>
+    public SKPaint Get(SKColor color, float width, bool antialias, SKBlendMode blend, SKStrokeCap cap)
+        => GetStroke(color, width, antialias, blend, cap);
+
     public void Clear()
     {
-        foreach (var p in _pool.Values) p.Dispose();
-        _pool.Clear();
+        foreach (var p in _strokePool.Values) p.Dispose();
+        foreach (var p in _fillPool.Values) p.Dispose();
+        _strokePool.Clear();
+        _fillPool.Clear();
     }
 }

@@ -60,6 +60,17 @@ public sealed class StrokeShape : IShape
         return false;
     }
 
+    public void Translate(float dx, float dy)
+    {
+        for (int i = 0; i < Points.Count; i++)
+        {
+            var p = Points[i];
+            Points[i] = new PointF(p.X + dx, p.Y + dy);
+        }
+        _bounds = new RectF(_bounds.Left + dx, _bounds.Top + dy,
+                            _bounds.Right + dx, _bounds.Bottom + dy);
+    }
+
     private static float SqDistancePointSegment(PointF p, PointF a, PointF b)
     {
         var abx = b.X - a.X;
@@ -82,12 +93,20 @@ public sealed class StrokeShape : IShape
 
 public enum StrokeKind
 {
-    /// <summary>Карандаш: фиксированная ширина, без сглаживания</summary>
+    /// <summary>
+    /// Карандаш: фиксированная ширина, без сглаживания
+    /// </summary>
     Pencil,
-    /// <summary>Кисть: anti-aliasing</summary>
+    /// <summary>
+    /// Кисть: anti-aliasing
+    /// </summary>
     Brush,
-    /// <summary>Маркер: полупрозрачный, режим наложения Multiply</summary>
+    /// <summary>
+    /// Маркер: полупрозрачный, режим наложения Multiply
+    /// </summary>
     Marker,
-    /// <summary>Ластик: «отрицательный штрих»</summary>
+    /// <summary>
+    /// Ластик: "отрицательный штрих"
+    /// </summary>
     Eraser
 }

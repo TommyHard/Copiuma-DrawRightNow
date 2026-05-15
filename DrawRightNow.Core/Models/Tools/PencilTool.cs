@@ -3,7 +3,8 @@
 namespace DrawRightNow.Core.Models.Tools;
 
 /// <summary>
-/// Карандаш: ломаная фиксированной ширины
+/// Карандаш/Кисть/Маркер/Ластик. Разница в режиме отрисовки —
+/// сохраняется в StrokeKind, а уже рендер выбирает blend mode и AA
 /// </summary>
 public sealed class PencilTool : ITool
 {
@@ -25,7 +26,7 @@ public sealed class PencilTool : ITool
 
     public ToolType Type { get; }
 
-    public StrokeShape? OnPointerDown(PointF p, ToolSettings settings)
+    public IShape? OnPointerDown(PointF p, ToolSettings settings)
     {
         _current = new StrokeShape(_kind, settings.Color, settings.Width);
         _current.AddPoint(p);
@@ -36,13 +37,12 @@ public sealed class PencilTool : ITool
     public void OnPointerMove(PointF p)
     {
         if (_current is null) return;
-        // Прореживаем: точку добавляем только если она отстоит достаточно далеко
         if (p.Distance(_lastPoint) < 1.5f) return;
         _current.AddPoint(p);
         _lastPoint = p;
     }
 
-    public StrokeShape? OnPointerUp(PointF p)
+    public IShape? OnPointerUp(PointF p)
     {
         if (_current is null) return null;
         if (p.Distance(_lastPoint) >= 0.5f) _current.AddPoint(p);

@@ -4,7 +4,10 @@ namespace DrawRightNow.Core.Models.Tools;
 
 /// <summary>
 /// Контракт активного инструмента. Преобразует ввод (нажатие/движение/отпускание)
-/// в новую/обновляемую фигуру (или команду удаления, у ластика)
+/// в новую/обновляемую фигуру.
+/// Возвращаемый тип IShape — общий, чтобы один и тот же контракт обслуживал
+/// и штрихи (Pencil/Brush/Marker/Eraser), и геометрические фигуры
+/// (Rectangle/Ellipse/Line/Arrow), и текст
 /// </summary>
 public interface ITool
 {
@@ -13,16 +16,15 @@ public interface ITool
     /// <summary>
     /// Начало взаимодействия. Возвращает новую "черновую" фигуру либо null
     /// </summary>
-    StrokeShape? OnPointerDown(PointF p, ToolSettings settings);
+    IShape? OnPointerDown(PointF p, ToolSettings settings);
 
     /// <summary>
-    /// Продолжение жеста
-    /// Должен работать без аллокаций
+    /// Продолжение жеста. Должен работать без аллокаций
     /// </summary>
     void OnPointerMove(PointF p);
 
     /// <summary>
     /// Завершение жеста. Возвращает финальную фигуру (или null, если жест отменён)
     /// </summary>
-    StrokeShape? OnPointerUp(PointF p);
+    IShape? OnPointerUp(PointF p);
 }

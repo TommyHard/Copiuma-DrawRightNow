@@ -1,4 +1,5 @@
-﻿using DrawRightNow.Core.Models;
+﻿using DrawRightNow.App.Services;
+using DrawRightNow.Core.Models;
 using DrawRightNow.Core.Models.Tools;
 using DrawRightNow.Core.ViewModels;
 using DrawRightNow.Interop;
@@ -38,7 +39,6 @@ public partial class MainWindow : Window
         Loaded += (_, _) => HideToolbar(animated: false);
         Closing += OnClosing;
 
-        // Глобальные горячие клавиши (для активного приложения)
         InputBindings.Add(new KeyBinding(_vm.UndoCommand, new KeyGesture(Key.Z, ModifierKeys.Control)));
         InputBindings.Add(new KeyBinding(_vm.RedoCommand, new KeyGesture(Key.Y, ModifierKeys.Control)));
     }
@@ -49,6 +49,8 @@ public partial class MainWindow : Window
     {
         _hwnd = new WindowInteropHelper(this).Handle;
         OverlayWindowHelper.Apply(_hwnd, clickThrough: !_vm.IsDrawingEnabled);
+
+        _vm.ScreenServices = new WpfScreenServices(this);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -62,6 +64,57 @@ public partial class MainWindow : Window
             if (_vm.IsToolbarPinned) ShowToolbar();
             else HideToolbar();
         }
+        else if (e.PropertyName == nameof(MainViewModel.EditingText))
+        {
+            ShowOrHideTextEditor();
+        }
+    }
+
+    // ---- Инлайн-редактор текста (TextTool) ----
+
+    private void ShowOrHideTextEditor()
+    {
+        var ts = _vm.EditingText;
+        if (ts is null)
+        {
+            TextEditor.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        Canvas.SetLeft(TextEditor, ts.Position.X);
+        Canvas.SetTop(TextEditor, ts.Position.Y - ts.FontSize * 1.1);
+        TextEditor.FontSize = ts.FontSize;
+        TextEditor.Foreground = new System.Windows.Media.SolidColorBrush(
+            System.Windows.Media.Color.FromArgb(ts.Color.A, ts.Color.R, ts.Color.G, ts.Color.B));
+        TextEditor.Text = ts.Text;
+        TextEditor.Visibility = Visibility.Visible;
+
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            TextEditor.Focus();
+            Keyboard.Focus(TextEditor);
+            TextEditor.CaretIndex = TextEditor.Text.Length;
+        }), System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    private void TextEditor_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            _vm.CommitTextEditing(TextEditor.Text);
+        }
+        else if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            _vm.CancelTextEditing();
+        }
+    }
+
+    private void TextEditor_LostFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (_vm.EditingText is not null)
+            _vm.CommitTextEditing(TextEditor.Text);
     }
 
     // ---- Toolbar auto-show ----
@@ -108,12 +161,23 @@ public partial class MainWindow : Window
 
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
+        if (_vm.EditingText is not null) return;
+
         switch (e.Key)
         {
             case Key.P: _vm.ActiveTool = ToolType.Pencil; e.Handled = true; break;
             case Key.B: _vm.ActiveTool = ToolType.Brush; e.Handled = true; break;
             case Key.M: _vm.ActiveTool = ToolType.Marker; e.Handled = true; break;
             case Key.E: _vm.ActiveTool = ToolType.Eraser; e.Handled = true; break;
+            case Key.R: _vm.ActiveTool = ToolType.Rectangle; e.Handled = true; break;
+            case Key.O: _vm.ActiveTool = ToolType.Ellipse; e.Handled = true; break;
+            case Key.L: _vm.ActiveTool = ToolType.Line; e.Handled = true; break;
+            case Key.A: _vm.ActiveTool = ToolType.Arrow; e.Handled = true; break;
+            case Key.T: _vm.ActiveTool = ToolType.Text; e.Handled = true; break;
+            case Key.K: _vm.ActiveTool = ToolType.KnifeDelete; e.Handled = true; break;
+            case Key.V: _vm.ActiveTool = ToolType.Move; e.Handled = true; break;
+            case Key.I: _vm.ActiveTool = ToolType.Eyedropper; e.Handled = true; break;
+            case Key.U: _vm.ActiveTool = ToolType.Blur; e.Handled = true; break;
             case Key.F8:
                 _vm.IsDrawingEnabled = !_vm.IsDrawingEnabled;
                 e.Handled = true;

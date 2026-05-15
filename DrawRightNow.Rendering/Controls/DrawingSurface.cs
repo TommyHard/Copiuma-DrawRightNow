@@ -75,7 +75,9 @@ public class DrawingSurface : SKElement
         var vm = ViewModel; if (vm is null) return;
 
         CaptureMouse();
-        vm.BeginStroke(ToCanvas(e.GetPosition(this)));
+        var local = e.GetPosition(this);
+        var screen = PointToScreen(local);
+        vm.OnInputDown(ToCanvas(local), ToCanvas(screen));
         e.Handled = true;
     }
 
@@ -85,7 +87,9 @@ public class DrawingSurface : SKElement
         if (e.LeftButton != MouseButtonState.Pressed) return;
         var vm = ViewModel; if (vm is null) return;
 
-        vm.ContinueStroke(ToCanvas(e.GetPosition(this)));
+        var local = e.GetPosition(this);
+        var screen = PointToScreen(local);
+        vm.OnInputMove(ToCanvas(local), ToCanvas(screen));
     }
 
     protected override void OnMouseUp(MouseButtonEventArgs e)
@@ -94,7 +98,9 @@ public class DrawingSurface : SKElement
         if (e.ChangedButton != MouseButton.Left) return;
         var vm = ViewModel; if (vm is null) return;
 
-        vm.EndStroke(ToCanvas(e.GetPosition(this)));
+        var local = e.GetPosition(this);
+        var screen = PointToScreen(local);
+        vm.OnInputUp(ToCanvas(local), ToCanvas(screen));
         if (IsMouseCaptured) ReleaseMouseCapture();
         e.Handled = true;
     }

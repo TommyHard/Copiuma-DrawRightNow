@@ -76,4 +76,76 @@ internal static class NativeMethods
         public uint time;
         public IntPtr dwExtraInfo;
     }
+
+    // ---- GDI screen capture / GetPixel ----
+
+    public const int SRCCOPY = 0x00CC0020;
+    public const int CAPTUREBLT = 0x40000000;
+    public const int BI_RGB = 0;
+    public const uint DIB_RGB_COLORS = 0;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr GetDC(IntPtr hWnd);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    public static extern uint GetPixel(IntPtr hDC, int x, int y);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    public static extern IntPtr CreateCompatibleDC(IntPtr hDC);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    public static extern IntPtr CreateCompatibleBitmap(IntPtr hDC, int w, int h);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    public static extern IntPtr SelectObject(IntPtr hDC, IntPtr hObject);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    public static extern bool DeleteObject(IntPtr hObject);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    public static extern bool DeleteDC(IntPtr hDC);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    public static extern bool BitBlt(IntPtr hdcDest, int x, int y, int w, int h,
+        IntPtr hdcSrc, int xSrc, int ySrc, int rop);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    public static extern int GetDIBits(IntPtr hdc, IntPtr hbm, uint start, uint cLines,
+        byte[] lpvBits, ref BITMAPINFO lpbmi, uint usage);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BITMAPINFOHEADER
+    {
+        public uint biSize;
+        public int biWidth;
+        public int biHeight;
+        public ushort biPlanes;
+        public ushort biBitCount;
+        public uint biCompression;
+        public uint biSizeImage;
+        public int biXPelsPerMeter;
+        public int biYPelsPerMeter;
+        public uint biClrUsed;
+        public uint biClrImportant;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RGBQUAD { public byte B, G, R, Reserved; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BITMAPINFO
+    {
+        public BITMAPINFOHEADER bmiHeader;
+        public RGBQUAD bmiColors;
+    }
+
+    // ---- Layered window alpha (для временного скрытия overlay) ----
+
+    public const uint LWA_ALPHA = 0x00000002;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
 }

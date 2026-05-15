@@ -38,5 +38,23 @@
                 Background="#01000000"
                 MouseEnter="HoverStrip_MouseEnter"/>
 
+        <!-- Инлайн-редактор для TextTool. Виден только когда EditingText != null. -->
+        <Canvas x:Name="TextEditorLayer"
+                IsHitTestVisible="True"
+                Background="Transparent">
+            <TextBox x:Name="TextEditor"
+                     Visibility="Collapsed"
+                     MinWidth="80"
+                     BorderBrush="#FF3498DB"
+                     BorderThickness="1"
+                     Background="#33000000"
+                     Foreground="White"
+                     CaretBrush="White"
+                     Padding="2,0"
+                     AcceptsReturn="False"
+                     KeyDown="TextEditor_KeyDown"
+                     LostKeyboardFocus="TextEditor_LostFocus"/>
+        </Canvas>
+
     </Grid>
 </Window>

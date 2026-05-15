@@ -42,6 +42,77 @@
 
             <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
 
+            <!-- Геометрические фигуры -->
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Прямоугольник (R)"
+                          Content="▭"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Rectangle,
+                                     Mode=TwoWay}"/>
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Эллипс (O)"
+                          Content="◯"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Ellipse,
+                                     Mode=TwoWay}"/>
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Линия (L)"
+                          Content="╱"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Line,
+                                     Mode=TwoWay}"/>
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Стрелка (A)"
+                          Content="→"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Arrow,
+                                     Mode=TwoWay}"/>
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Текст (T)"
+                          Content="T"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Text,
+                                     Mode=TwoWay}"/>
+
+            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+
+            <!-- Манипуляции -->
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Нож — удалить фигуру по клику (K)"
+                          Content="✂"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=KnifeDelete,
+                                     Mode=TwoWay}"/>
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Переместить (V)"
+                          Content="✥"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Move,
+                                     Mode=TwoWay}"/>
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Пипетка — взять цвет с экрана (I)"
+                          Content="💧"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Eyedropper,
+                                     Mode=TwoWay}"/>
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Размытие региона экрана (U)"
+                          Content="◐"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Blur,
+                                     Mode=TwoWay}"/>
+
+            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+
             <!-- История -->
             <Button Style="{StaticResource FlatButton}"
                     ToolTip="Отменить (Ctrl+Z)"
