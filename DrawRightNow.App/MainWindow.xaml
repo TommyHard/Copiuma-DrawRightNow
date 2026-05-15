@@ -1,0 +1,42 @@
+﻿<Window x:Class="DrawRightNow.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:render="clr-namespace:DrawRightNow.Rendering.Controls;assembly=DrawRightNow.Rendering"
+        xmlns:views="clr-namespace:DrawRightNow.App.Views"
+        Title="DrawRightNow"
+        Topmost="True"
+        ShowInTaskbar="False"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowState="Maximized"
+        ResizeMode="NoResize"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Grid x:Name="RootGrid" 
+          Background="Transparent">
+
+        <!-- Холст рисования на весь экран -->
+        <render:DrawingSurface x:Name="Surface"
+                               ViewModel="{Binding}"
+                               IsHitTestVisible="{Binding IsDrawingEnabled}"/>
+
+        <!-- Горизонтальная плавающая панель сверху -->
+        <Grid x:Name="ToolbarHost"
+              VerticalAlignment="Top"
+              HorizontalAlignment="Center"
+              Margin="0,12,0,0">
+            <views:ToolbarView x:Name="Toolbar" DataContext="{Binding}"/>
+        </Grid>
+
+        <!-- Полоса-ловушка для всплытия панели у верхней кромки -->
+        <Border x:Name="HoverStripTop"
+                Height="12"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Stretch"
+                Background="#01000000"
+                MouseEnter="HoverStrip_MouseEnter"/>
+
+    </Grid>
+</Window>

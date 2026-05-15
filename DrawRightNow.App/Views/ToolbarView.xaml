@@ -1,0 +1,109 @@
+﻿<UserControl x:Class="DrawRightNow.App.Views.ToolbarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:DrawRightNow.App.Converters"
+             Background="Transparent">
+    <UserControl.Resources>
+        <conv:ToolTypeToBoolConverter x:Key="ToolConv"/>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource Toolbar}">
+        <StackPanel Orientation="Horizontal">
+
+            <!-- Инструменты -->
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Карандаш (P)"
+                          Content="✎"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Pencil,
+                                     Mode=TwoWay}"/>
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Кисть (B)"
+                          Content="🖌"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Brush,
+                                     Mode=TwoWay}"/>
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Маркер (M)"
+                          Content="▮"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Marker,
+                                     Mode=TwoWay}"/>
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Ластик (E)"
+                          Content="⌫"
+                          IsChecked="{Binding ActiveTool,
+                                     Converter={StaticResource ToolConv},
+                                     ConverterParameter=Eraser,
+                                     Mode=TwoWay}"/>
+
+            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+
+            <!-- История -->
+            <Button Style="{StaticResource FlatButton}"
+                    ToolTip="Отменить (Ctrl+Z)"
+                    Content="↶"
+                    Command="{Binding UndoCommand}"/>
+            <Button Style="{StaticResource FlatButton}"
+                    ToolTip="Повторить (Ctrl+Y)"
+                    Content="↷"
+                    Command="{Binding RedoCommand}"/>
+            <Button Style="{StaticResource FlatButton}"
+                    ToolTip="Очистить холст"
+                    Content="✕"
+                    Command="{Binding ClearCommand}"/>
+
+            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+
+            <!-- Толщина -->
+            <Slider x:Name="WidthSlider"
+                    Width="80" Margin="6,0"
+                    VerticalAlignment="Center"
+                    Minimum="1" Maximum="24"
+                    Value="{Binding StrokeWidth, Mode=TwoWay}"
+                    ToolTip="Толщина линии"/>
+
+            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+
+            <!-- Палитра -->
+            <Button Style="{StaticResource FlatButton}" Tag="Red"
+                    Background="#E74C3C"   ToolTip="Красный"
+                    Click="ColorButton_Click"/>
+            <Button Style="{StaticResource FlatButton}" Tag="Green"
+                    Background="#2ECC71"   ToolTip="Зелёный"
+                    Click="ColorButton_Click"/>
+            <Button Style="{StaticResource FlatButton}" Tag="Blue"
+                    Background="#3498DB"   ToolTip="Синий"
+                    Click="ColorButton_Click"/>
+            <Button Style="{StaticResource FlatButton}" Tag="Yellow"
+                    Background="#F1C40F"   ToolTip="Жёлтый"
+                    Click="ColorButton_Click"/>
+            <Button Style="{StaticResource FlatButton}" Tag="Black"
+                    Background="#000000"   ToolTip="Чёрный"
+                    Click="ColorButton_Click"/>
+            <Button Style="{StaticResource FlatButton}" Tag="White"
+                    Background="#FFFFFF"   ToolTip="Белый"
+                    Click="ColorButton_Click"/>
+
+            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+
+            <!-- Pin + Click-through + Закрыть -->
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Закрепить панель"
+                          Content="📌"
+                          IsChecked="{Binding IsToolbarPinned, Mode=TwoWay}"/>
+            <ToggleButton Style="{StaticResource ToolButton}"
+                          ToolTip="Режим рисования / клики сквозь окно (F8)"
+                          Content="✋"
+                          IsChecked="{Binding IsDrawingEnabled, Mode=TwoWay}"/>
+            <Button Style="{StaticResource FlatButton}"
+                    ToolTip="Выйти из DrawRightNow"
+                    Content="✖"
+                    Click="Close_Click"/>
+
+        </StackPanel>
+    </Border>
+</UserControl>

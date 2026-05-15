@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Assets\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DrawRightNow.Core\DrawRightNow.Core.csproj" />
+    <ProjectReference Include="..\DrawRightNow.Interop\DrawRightNow.Interop.csproj" />
+    <ProjectReference Include="..\DrawRightNow.Rendering\DrawRightNow.Rendering.csproj" />
+  </ItemGroup>
+
+</Project>

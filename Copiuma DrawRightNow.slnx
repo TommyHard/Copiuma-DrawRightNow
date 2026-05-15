@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="DrawRightNow.App/DrawRightNow.App.csproj" />
+  <Project Path="DrawRightNow.Core/DrawRightNow.Core.csproj" />
+  <Project Path="DrawRightNow.Interop/DrawRightNow.Interop.csproj" />
+  <Project Path="DrawRightNow.Rendering/DrawRightNow.Rendering.csproj" />
+</Solution>
