@@ -1,6 +1,12 @@
 <Solution>
   <Project Path="DrawRightNow.App/DrawRightNow.App.csproj" />
-  <Project Path="DrawRightNow.Core/DrawRightNow.Core.csproj" />
-  <Project Path="DrawRightNow.Interop/DrawRightNow.Interop.csproj" />
-  <Project Path="DrawRightNow.Rendering/DrawRightNow.Rendering.csproj" />
+  <Project Path="DrawRightNow.Core/DrawRightNow.Core.csproj">
+    <Build Solution="Release|*" Project="false" />
+  </Project>
+  <Project Path="DrawRightNow.Interop/DrawRightNow.Interop.csproj">
+    <Build Solution="Release|*" Project="false" />
+  </Project>
+  <Project Path="DrawRightNow.Rendering/DrawRightNow.Rendering.csproj">
+    <Build Solution="Release|*" Project="false" />
+  </Project>
 </Solution>

@@ -1,0 +1,47 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:s="clr-namespace:System;assembly=System.Runtime">
+
+    <s:String x:Key="Tip_Pencil">Pencil (P)</s:String>
+    <s:String x:Key="Tip_Brush">Brush (B)</s:String>
+    <s:String x:Key="Tip_Marker">Marker (M)</s:String>
+    <s:String x:Key="Tip_Eraser">Eraser (E)</s:String>
+
+    <s:String x:Key="Tip_Rectangle">Rectangle (R)</s:String>
+    <s:String x:Key="Tip_Ellipse">Ellipse (O)</s:String>
+    <s:String x:Key="Tip_Line">Line (L)</s:String>
+    <s:String x:Key="Tip_Arrow">Arrow (A)</s:String>
+    <s:String x:Key="Tip_Text">Text (T)</s:String>
+
+    <s:String x:Key="Tip_Knife">Knife — delete shape on click (K)</s:String>
+    <s:String x:Key="Tip_Move">Move (V)</s:String>
+    <s:String x:Key="Tip_Eyedropper">Eyedropper — pick color from screen (I)</s:String>
+    <s:String x:Key="Tip_Blur">Blur a screen region (U)</s:String>
+    <s:String x:Key="Tip_LiveBlur">Live mode — keep blurring as content beneath changes</s:String>
+    <s:String x:Key="Tip_BlurSigma">Blur strength (sigma)</s:String>
+
+    <s:String x:Key="Tip_Undo">Undo (Ctrl+Z)</s:String>
+    <s:String x:Key="Tip_Redo">Redo (Ctrl+Y)</s:String>
+    <s:String x:Key="Tip_Clear">Clear canvas</s:String>
+    <s:String x:Key="Tip_Save">Save as PNG/JPG</s:String>
+    <s:String x:Key="Tip_Copy">Copy to clipboard (Win+Shift+C)</s:String>
+    <s:String x:Key="Tip_StrokeWidth">Stroke width</s:String>
+    <s:String x:Key="Tip_Fill">Fill shapes (semi-transparent, current color)</s:String>
+
+    <s:String x:Key="Tip_ColorRed">Red</s:String>
+    <s:String x:Key="Tip_ColorGreen">Green</s:String>
+    <s:String x:Key="Tip_ColorBlue">Blue</s:String>
+    <s:String x:Key="Tip_ColorYellow">Yellow</s:String>
+    <s:String x:Key="Tip_ColorBlack">Black</s:String>
+    <s:String x:Key="Tip_ColorWhite">White</s:String>
+
+    <s:String x:Key="Tip_Pin">Pin toolbar</s:String>
+    <s:String x:Key="Tip_ToolbarTranslucent">Translucent toolbar</s:String>
+    <s:String x:Key="Tip_OverlayDim">Highlight drawing area</s:String>
+    <s:String x:Key="Tip_DrawingEnabled">Drawing mode / clicks pass through (F8)</s:String>
+    <s:String x:Key="Tip_Minimize">Minimize to tray</s:String>
+    <s:String x:Key="Tip_Close">Exit DrawRightNow</s:String>
+
+    <s:String x:Key="Tip_Language">Toggle language EN/RU</s:String>
+
+</ResourceDictionary>

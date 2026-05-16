@@ -43,10 +43,44 @@ public class DrawingSurface : SKElement
         var self = (DrawingSurface)d;
 
         if (e.OldValue is MainViewModel old)
+        {
             old.Canvas.Changed -= self.OnCanvasChanged;
+            old.PropertyChanged -= self.OnVmPropertyChanged;
+            self.UnsubscribeFromFrameProvider(old.FrameProvider);
+        }
 
         if (e.NewValue is MainViewModel @new)
+        {
             @new.Canvas.Changed += self.OnCanvasChanged;
+            @new.PropertyChanged += self.OnVmPropertyChanged;
+            self.SubscribeToFrameProvider(@new.FrameProvider);
+        }
+    }
+
+    private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(MainViewModel.FrameProvider)) return;
+        SubscribeToFrameProvider(ViewModel?.FrameProvider);
+    }
+
+    private DrawRightNow.Core.Services.IFrameProvider? _subscribedProvider;
+    private void SubscribeToFrameProvider(DrawRightNow.Core.Services.IFrameProvider? p)
+    {
+        if (ReferenceEquals(_subscribedProvider, p)) return;
+        UnsubscribeFromFrameProvider(_subscribedProvider);
+        _subscribedProvider = p;
+        if (p is not null) p.FrameUpdated += OnFrameUpdated;
+    }
+    private void UnsubscribeFromFrameProvider(DrawRightNow.Core.Services.IFrameProvider? p)
+    {
+        if (p is null) return;
+        p.FrameUpdated -= OnFrameUpdated;
+        if (ReferenceEquals(_subscribedProvider, p)) _subscribedProvider = null;
+    }
+
+    private void OnFrameUpdated()
+    {
+        Dispatcher.BeginInvoke(InvalidateVisual, System.Windows.Threading.DispatcherPriority.Render);
     }
 
     private void OnCanvasChanged(object? sender, EventArgs e) => InvalidateVisual();

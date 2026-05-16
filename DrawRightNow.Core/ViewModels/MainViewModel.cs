@@ -12,7 +12,7 @@ namespace DrawRightNow.Core.ViewModels;
 /// Главная ViewModel. Содержит canvas, историю Undo/Redo, активный
 /// инструмент и текущие настройки (цвет, толщина). Платформо-независима;
 /// специальные инструменты (Knife, Move, Eyedropper, Blur) маршрутизируются
-/// здесь по типу ActiveTool
+/// здесь же по типу ActiveTool
 /// </summary>
 public sealed class MainViewModel : ObservableObject
 {
@@ -24,8 +24,12 @@ public sealed class MainViewModel : ObservableObject
     private ToolType _activeTool = ToolType.Pencil;
     private ColorRgba _strokeColor = ColorRgba.Red;
     private float _strokeWidth = 3f;
-    private bool _isToolbarPinned = false;
+    private bool _isToolbarPinned = true;        // По умолчанию тулбар закреплён — иначе при запуске не видно ничего
     private bool _isDrawingEnabled = true;
+    private bool _toolbarTranslucent = false;    // Тогл "панель сквозь" — opacity 1.0/0.45
+    private bool _overlayDimEnabled = false;     // Видимая полупрозрачная подложка холста
+    private bool _fillEnabled = false;
+    private bool _liveBlurEnabled = false;
     private TextShape? _editingText;
 
     // Move state
@@ -34,7 +38,6 @@ public sealed class MainViewModel : ObservableObject
     private float _moveTotalDx;
     private float _moveTotalDy;
 
-    // Blur state — координаты в screen-системе
     private bool _blurInProgress;
     private PointF _blurStartLocal;
     private PointF _blurStartScreen;
@@ -69,6 +72,22 @@ public sealed class MainViewModel : ObservableObject
     /// no-op — приложение не падает
     /// </summary>
     public IScreenServices? ScreenServices { get; set; }
+
+    /// <summary>
+    /// Источник «живого» кадра экрана. Опциональный — без него Live-blur
+    /// автоматически переключается на статический снимок
+    /// </summary>
+    public IFrameProvider? FrameProvider { get; set; }
+
+    /// <summary>
+    /// Когда true, инструмент Blur создаёт LiveBlurShape (видео под областью
+    /// продолжает двигаться размыто). Иначе — статический снимок (BlurShape)
+    /// </summary>
+    public bool LiveBlurEnabled
+    {
+        get => _liveBlurEnabled;
+        set => SetField(ref _liveBlurEnabled, value);
+    }
 
     public RelayCommand UndoCommand => _undoCmd;
     public RelayCommand RedoCommand => _redoCmd;
@@ -113,10 +132,39 @@ public sealed class MainViewModel : ObservableObject
         set => SetField(ref _isToolbarPinned, value);
     }
 
+    /// <summary>
+    /// Полупрозрачность тулбара
+    /// </summary>
+    public bool ToolbarTranslucent
+    {
+        get => _toolbarTranslucent;
+        set => SetField(ref _toolbarTranslucent, value);
+    }
+
+    /// <summary>
+    /// Делает холст слегка видимым (тонкий dark-tint), чтобы пользователь
+    /// понимал, где можно рисовать. Не путать с IsDrawingEnabled
+    /// </summary>
+    public bool OverlayDimEnabled
+    {
+        get => _overlayDimEnabled;
+        set => SetField(ref _overlayDimEnabled, value);
+    }
+
     public bool IsDrawingEnabled
     {
         get => _isDrawingEnabled;
         set => SetField(ref _isDrawingEnabled, value);
+    }
+
+    /// <summary>
+    /// Заливка для геометрических фигур (Rectangle/Ellipse). Цвет заливки —
+    /// текущий StrokeColor с альфой 0x60. Включается в тулбаре
+    /// </summary>
+    public bool FillEnabled
+    {
+        get => _fillEnabled;
+        set => SetField(ref _fillEnabled, value);
     }
 
     public TextShape? EditingText
@@ -168,7 +216,7 @@ public sealed class MainViewModel : ObservableObject
     {
         if (!ToolFactory.IsImplemented(_activeTool)) return;
         _tool = ToolFactory.Create(_activeTool);
-        var settings = new ToolSettings(_strokeColor, _strokeWidth);
+        var settings = new ToolSettings(_strokeColor, _strokeWidth, _fillEnabled);
         var shape = _tool.OnPointerDown(p, settings);
         if (shape is not null) Canvas.BeginPending(shape);
     }
@@ -305,6 +353,13 @@ public sealed class MainViewModel : ObservableObject
         var svc = ScreenServices;
         if (svc is null || w <= 0 || h <= 0) return;
 
+        if (_liveBlurEnabled && FrameProvider is not null)
+        {
+            var live = new LiveBlurShape(localRect, sx, sy, w, h, _blurSigma, FrameProvider);
+            History.Execute(new AddShapeCommand(Canvas, live));
+            return;
+        }
+
         var pixels = svc.CaptureRegionBgra(sx, sy, w, h);
         if (pixels.Length == 0) return;
 
@@ -343,6 +398,7 @@ public sealed class MainViewModel : ObservableObject
         History.Clear();
     }
 
+    // ---- Совместимость со старым API ----
     public void BeginStrokeAt(PointF p) => OnInputDown(p, p);
     public void ContinueStrokeAt(PointF p) => OnInputMove(p, p);
     public void EndStrokeAt(PointF p) => OnInputUp(p, p);

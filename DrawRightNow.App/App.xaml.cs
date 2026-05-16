@@ -1,14 +1,14 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.Windows;
+using DrawRightNow.App.Services;
+using Application = System.Windows.Application;
 
-namespace DrawRightNow.App
+namespace DrawRightNow.App;
+
+public partial class App : Application
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App : Application
+    protected override void OnStartup(StartupEventArgs e)
     {
+        LocalizationManager.Initialize();
+        base.OnStartup(e);
     }
-
 }

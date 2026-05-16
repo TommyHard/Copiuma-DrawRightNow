@@ -14,13 +14,20 @@
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
 
-    <Grid x:Name="RootGrid" 
+    <Grid x:Name="RootGrid"
           Background="Transparent">
 
-        <!-- Холст рисования на весь экран -->
+        <!-- Полупрозрачная подложка: «вижу, где могу рисовать».
+             Не перехватывает клики; видна только при OverlayDimEnabled -->
+        <Border x:Name="DimLayer"
+                Background="#33000000"
+                IsHitTestVisible="False"
+                Visibility="Collapsed"/>
+
+        <!-- Холст рисования на весь экран. IsHitTestVisible держим всегда True:
+             click-through контролируется на уровне Win32 (WM_NCHITTEST) -->
         <render:DrawingSurface x:Name="Surface"
-                               ViewModel="{Binding}"
-                               IsHitTestVisible="{Binding IsDrawingEnabled}"/>
+                               ViewModel="{Binding}"/>
 
         <!-- Горизонтальная плавающая панель сверху -->
         <Grid x:Name="ToolbarHost"
@@ -30,6 +37,20 @@
             <views:ToolbarView x:Name="Toolbar" DataContext="{Binding}"/>
         </Grid>
 
+        <!-- Угловой бейдж — гарантия того, что overlay вообще видим, даже
+             если пользователь ещё ничего не нарисовал. Не блокирует ввод -->
+        <Border x:Name="ActiveBadge"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Margin="0,0,16,16"
+                Padding="10,4"
+                CornerRadius="10"
+                Background="#AA1E1E22"
+                BorderBrush="#FF3498DB"
+                BorderThickness="1"
+                IsHitTestVisible="False">
+            <TextBlock Text="DrawRightNow ●" Foreground="#FFEFEFEF" FontSize="11"/>
+        </Border>
+
         <!-- Полоса-ловушка для всплытия панели у верхней кромки -->
         <Border x:Name="HoverStripTop"
                 Height="12"
@@ -38,10 +59,28 @@
                 Background="#01000000"
                 MouseEnter="HoverStrip_MouseEnter"/>
 
-        <!-- Инлайн-редактор для TextTool. Виден только когда EditingText != null. -->
+        <Canvas x:Name="EyedropperOverlay"
+                IsHitTestVisible="False"
+                Visibility="Collapsed">
+            <Grid x:Name="EyedropperPreview">
+                <Line X1="-12" Y1="0" X2="-3"  Y2="0" Stroke="White" StrokeThickness="1"/>
+                <Line X1="3"   Y1="0" X2="12"  Y2="0" Stroke="White" StrokeThickness="1"/>
+                <Line X1="0"   Y1="-12" X2="0" Y2="-3" Stroke="White" StrokeThickness="1"/>
+                <Line X1="0"   Y1="3"   X2="0" Y2="12" Stroke="White" StrokeThickness="1"/>
+                <Border x:Name="EyedropperSwatch"
+                        Width="36" Height="36"
+                        HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Margin="14,14,0,0"
+                        BorderBrush="White" BorderThickness="2"
+                        Background="Transparent"
+                        SnapsToDevicePixels="True"/>
+            </Grid>
+        </Canvas>
+
+        <!-- Инлайн-редактор для TextTool -->
         <Canvas x:Name="TextEditorLayer"
                 IsHitTestVisible="True"
-                Background="Transparent">
+                Background="{x:Null}">
             <TextBox x:Name="TextEditor"
                      Visibility="Collapsed"
                      MinWidth="80"

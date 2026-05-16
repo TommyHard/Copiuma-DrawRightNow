@@ -7,13 +7,15 @@ namespace DrawRightNow.Rendering;
 
 /// <summary>
 /// Платформо-независимый рендер: получает SKCanvas и любую IShape, рисует.
-/// Конкретный хостинг (SKElement / OpenGL / Direct2D) живёт в Controls/.
+/// Конкретный хостинг (SKElement / OpenGL / Direct2D) живёт в Controls/
 /// </summary>
 public sealed class SkiaShapeRenderer
 {
     private readonly SkiaPaintPool _pool = new();
     private readonly SKPath _scratch = new();
+    // Кэш SKFont — типичных размеров шрифта десяток
     private readonly System.Collections.Generic.Dictionary<int, SKFont> _fonts = new();
+    // Кэш SKImage для BlurShape (ключ — Guid фигуры; одна фигура — один image)
     private readonly System.Collections.Generic.Dictionary<Guid, SKImage> _blurImages = new();
     private SKTypeface? _typeface;
 
@@ -28,6 +30,7 @@ public sealed class SkiaShapeRenderer
             case ArrowShape a: DrawArrow(canvas, a); break;
             case TextShape t: DrawText(canvas, t); break;
             case BlurShape bl: DrawBlur(canvas, bl); break;
+            case LiveBlurShape lb: DrawLiveBlur(canvas, lb); break;
         }
     }
 
@@ -102,11 +105,13 @@ public sealed class SkiaShapeRenderer
 
         canvas.DrawLine(a.Start.X, a.Start.Y, a.End.X, a.End.Y, paint);
 
+        // Наконечник: две короткие линии под углом 25 от направления стрелки
         var dx = a.End.X - a.Start.X;
         var dy = a.End.Y - a.Start.Y;
         var len = MathF.Sqrt(dx * dx + dy * dy);
         if (len < 1e-3f) return;
 
+        // Размер наконечника зависит от длины (с минимумом и максимумом)
         var head = MathF.Min(MathF.Max(12f, a.Style.StrokeWidth * 4f), len * 0.35f);
         var ux = dx / len;
         var uy = dy / len;
@@ -114,6 +119,7 @@ public sealed class SkiaShapeRenderer
         const float cos = 0.9063078f;  // cos 25
         const float sin = 0.4226183f;  // sin 25
 
+        // Поворачиваем единичный вектор (ux,uy) на +-25 и берём его "назад" (минус)
         var lx = -(ux * cos + uy * sin);
         var ly = -(uy * cos - ux * sin);
         var rx = -(ux * cos - uy * sin);
@@ -135,7 +141,7 @@ public sealed class SkiaShapeRenderer
             Color = ToSk(t.Color),
             IsAntialias = true
         };
-
+        // SkiaSharp 2.x: SKCanvas.DrawText(string, x, baseline, font, paint)
         canvas.DrawText(t.Text, t.Position.X, t.Position.Y, paint);
     }
 
@@ -158,6 +164,8 @@ public sealed class SkiaShapeRenderer
     {
         if (!_blurImages.TryGetValue(b.Id, out var img))
         {
+            // Импорт BGRA байтов в SKImage. У формы placement в логических
+            // (window-local) координатах, а пиксели — в physical screen
             var info = new SKImageInfo(b.PixelWidth, b.PixelHeight,
                                        SKColorType.Bgra8888, SKAlphaType.Opaque);
             using var data = SKData.CreateCopy(b.BgraPixels);
@@ -175,6 +183,37 @@ public sealed class SkiaShapeRenderer
         canvas.DrawImage(img, dest, paint);
     }
 
+    private readonly System.Collections.Generic.Dictionary<Guid, (long version, SKImage img)> _liveBlurCache = new();
+
+    private void DrawLiveBlur(SKCanvas canvas, LiveBlurShape b)
+    {
+        // Используем кэш: пересоздаём SKImage только при смене FrameVersion
+        var ver = b.Provider.FrameVersion;
+        if (!_liveBlurCache.TryGetValue(b.Id, out var entry) || entry.version != ver)
+        {
+            var pixels = b.CurrentFrameBgra();
+            if (pixels is null || pixels.Length == 0) return;
+
+            entry.img?.Dispose();
+
+            var info = new SKImageInfo(b.Width, b.Height, SKColorType.Bgra8888, SKAlphaType.Opaque);
+            using var data = SKData.CreateCopy(pixels);
+            var img = SKImage.FromPixelData(info, data, info.RowBytes);
+            if (img is null) return;
+
+            entry = (ver, img);
+            _liveBlurCache[b.Id] = entry;
+        }
+
+        var bb = b.Bounds;
+        var dest = new SKRect(bb.Left, bb.Top, bb.Right, bb.Bottom);
+
+        using var blurFilter = SKImageFilter.CreateBlur(b.Sigma, b.Sigma);
+        using var paint = new SKPaint { ImageFilter = blurFilter, IsAntialias = true };
+
+        canvas.DrawImage(entry.img, dest, paint);
+    }
+
     /// <summary>
     /// Освободить SKImage-кэш, если фигура удалена (вызывает Canvas.Changed)
     /// </summary>
@@ -184,6 +223,11 @@ public sealed class SkiaShapeRenderer
         {
             img.Dispose();
             _blurImages.Remove(shapeId);
+        }
+        if (_liveBlurCache.TryGetValue(shapeId, out var live))
+        {
+            live.img?.Dispose();
+            _liveBlurCache.Remove(shapeId);
         }
     }
 

@@ -7,23 +7,18 @@ namespace DrawRightNow.Interop;
 /// </summary>
 public static class OverlayWindowHelper
 {
-    /// <summary>
-    /// Базовые флаги overlay: TOPMOST + LAYERED + TOOLWINDOW + NOACTIVATE
-    /// При clickThrough = true дополнительно ставится WS_EX_TRANSPARENT
-    /// </summary>
     public static void Apply(IntPtr hwnd, bool clickThrough)
     {
         if (hwnd == IntPtr.Zero) return;
 
         var ex = (uint)NativeMethods.GetWindowLongPtr(hwnd, NativeMethods.GWL_EXSTYLE).ToInt64();
 
-        ex |= NativeMethods.WS_EX_LAYERED
-            | NativeMethods.WS_EX_TOPMOST
-            | NativeMethods.WS_EX_TOOLWINDOW
-            | NativeMethods.WS_EX_NOACTIVATE;
+        ex |= NativeMethods.WS_EX_TOPMOST
+            | NativeMethods.WS_EX_TOOLWINDOW;
 
-        if (clickThrough) ex |= NativeMethods.WS_EX_TRANSPARENT;
-        else ex &= ~NativeMethods.WS_EX_TRANSPARENT;
+        ex &= ~NativeMethods.WS_EX_TRANSPARENT;
+        ex &= ~NativeMethods.WS_EX_LAYERED;
+        ex &= ~NativeMethods.WS_EX_NOACTIVATE;
 
         NativeMethods.SetWindowLongPtr(hwnd, NativeMethods.GWL_EXSTYLE, new IntPtr((long)ex));
 
@@ -33,14 +28,21 @@ public static class OverlayWindowHelper
     }
 
     /// <summary>
-    /// Динамическое переключение режима "клики проходят насквозь"
+    /// Реальное переключение click-through
+    /// делается в MainWindow через WM_NCHITTEST — важно, чтобы
+    /// тулбар продолжал ловить клики даже в режиме "клики сквозь окно"
     /// </summary>
-    public static void SetClickThrough(IntPtr hwnd, bool enabled)
+    public static void SetClickThrough(IntPtr hwnd, bool enabled) { /* ignore */ }
+
+    /// <summary>
+    /// WDA_EXCLUDEFROMCAPTURE: исключает overlay из BitBlt/WGC
+    /// </summary>
+    public static void ExcludeFromCapture(IntPtr hwnd)
     {
         if (hwnd == IntPtr.Zero) return;
-        var ex = (uint)NativeMethods.GetWindowLongPtr(hwnd, NativeMethods.GWL_EXSTYLE).ToInt64();
-        if (enabled) ex |= NativeMethods.WS_EX_TRANSPARENT;
-        else ex &= ~NativeMethods.WS_EX_TRANSPARENT;
-        NativeMethods.SetWindowLongPtr(hwnd, NativeMethods.GWL_EXSTYLE, new IntPtr((long)ex));
+        if (!NativeMethods.SetWindowDisplayAffinity(hwnd, NativeMethods.WDA_EXCLUDEFROMCAPTURE))
+        {
+            NativeMethods.SetWindowDisplayAffinity(hwnd, NativeMethods.WDA_NONE);
+        }
     }
 }

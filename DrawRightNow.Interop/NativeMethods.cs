@@ -6,7 +6,7 @@ namespace DrawRightNow.Interop;
 /// <summary>
 /// P/Invoke-обёртки
 /// </summary>
-internal static class NativeMethods
+public static class NativeMethods
 {
     public const int GWL_EXSTYLE = -20;
 
@@ -148,4 +148,32 @@ internal static class NativeMethods
 
     [DllImport("user32.dll", SetLastError = true)]
     public static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
+
+    // ---- Display affinity (исключить overlay из любых screen-capture) ----
+
+    public const uint WDA_NONE = 0x00000000;
+    public const uint WDA_MONITOR = 0x00000001;
+    public const uint WDA_EXCLUDEFROMCAPTURE = 0x00000011;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SetWindowDisplayAffinity(IntPtr hwnd, uint dwAffinity);
+
+    // ---- Global hotkeys (RegisterHotKey) ----
+
+    public const uint MOD_ALT = 0x0001;
+    public const uint MOD_CONTROL = 0x0002;
+    public const uint MOD_SHIFT = 0x0004;
+    public const uint MOD_WIN = 0x0008;
+    public const uint MOD_NOREPEAT = 0x4000;
+
+    public const int WM_HOTKEY = 0x0312;
+    public const int WM_NCHITTEST = 0x0084;
+    public const int HTTRANSPARENT = -1;
+    public const int HTCLIENT = 1;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 }
