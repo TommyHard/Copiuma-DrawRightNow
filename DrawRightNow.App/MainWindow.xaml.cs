@@ -372,16 +372,25 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Получаем текстовое представление нажатой клавиши
         Key key = (e.Key == Key.System) ? e.SystemKey : e.Key;
-        string keyStr = key.ToString();
+
+        // Формируем нажатую комбинацию
+        var modifiers = Keyboard.Modifiers;
+        string pressedCombo = "";
+
+        if (modifiers.HasFlag(ModifierKeys.Control)) pressedCombo += "Ctrl + ";
+        if (modifiers.HasFlag(ModifierKeys.Alt)) pressedCombo += "Alt + ";
+        if (modifiers.HasFlag(ModifierKeys.Shift)) pressedCombo += "Shift + ";
+
+        pressedCombo += key.ToString();
 
         // Динамические хоткеи инструментов
         foreach (var kvp in _vm.Settings.ToolHotkeys)
         {
-            if (kvp.Value == keyStr)
+            // Сравниваем с собранной комбинацией
+            if (kvp.Value == pressedCombo && Enum.TryParse<ToolType>(kvp.Key, out var tool))
             {
-                _vm.ActiveTool = kvp.Key;
+                _vm.ActiveTool = tool;
                 e.Handled = true;
                 return;
             }

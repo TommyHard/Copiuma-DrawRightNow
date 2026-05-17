@@ -15,13 +15,15 @@
     <s:String x:Key="Tip_Move">Переместить</s:String>
     <s:String x:Key="Tip_Eyedropper">Пипетка — взять цвет с экрана</s:String>
     <s:String x:Key="Tip_Blur">Размытие региона экрана</s:String>
-    <s:String x:Key="Tip_LiveBlur">Live-режим — следить за подложкой</s:String>
+    <s:String x:Key="Tip_LiveBlur">Live-режим — следить за подложкой в реальном времени</s:String>
     <s:String x:Key="Tip_BlurSigma">Сила размытия (sigma)</s:String>
+
     <s:String x:Key="Tip_Undo">Отменить</s:String>
     <s:String x:Key="Tip_Redo">Повторить</s:String>
     <s:String x:Key="Tip_Clear">Очистить холст</s:String>
     <s:String x:Key="Tip_Save">Сохранить как PNG/JPG</s:String>
     <s:String x:Key="Tip_Copy">Копировать в буфер</s:String>
+    
     <s:String x:Key="Tip_StrokeWidth">Толщина линии</s:String>
     <s:String x:Key="Tip_Fill">Заливка фигур</s:String>
     <s:String x:Key="Tip_Pin">Закрепить панель</s:String>

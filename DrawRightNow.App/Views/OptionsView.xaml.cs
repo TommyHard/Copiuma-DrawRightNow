@@ -7,16 +7,15 @@ using DrawRightNow.Core.Models;
 using DrawRightNow.Core.Models.Tools;
 using DrawRightNow.App.Services;
 
-// Строгие псевдонимы для WPF, исключающие конфликты с Windows Forms
-using UserControl = System.Windows.Controls.UserControl;
+using Window = System.Windows.Window;
 using Button = System.Windows.Controls.Button;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
-using Application = System.Windows.Application;
 using KeyEventHandler = System.Windows.Input.KeyEventHandler;
+using Application = System.Windows.Application;
 
 namespace DrawRightNow.App.Views;
 
-public partial class OptionsView : UserControl
+public partial class OptionsView : Window
 {
     private string? _activeGlobalAction = null;
     private ToolType? _activeToolAction = null;
@@ -27,9 +26,11 @@ public partial class OptionsView : UserControl
         DataContextChanged += (_, _) => RefreshHotkeyLabels();
     }
 
-    private void Close_Click(object sender, RoutedEventArgs e)
+    private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void Window_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (DataContext is MainViewModel vm) vm.IsOptionsOpen = false;
+        if (e.ChangedButton == MouseButton.Left) DragMove();
     }
 
     private void LangRu_Click(object sender, RoutedEventArgs e) => ChangeLanguage("ru");
@@ -56,23 +57,23 @@ public partial class OptionsView : UserControl
         Btn_Redo.Content = h["Redo"].DisplayText;
         Btn_Copy.Content = h["Copy"].DisplayText;
 
-        // Локальные инструменты
-        Btn_T_Pencil.Content = t[ToolType.Pencil].ToString();
-        Btn_T_Brush.Content = t[ToolType.Brush].ToString();
-        Btn_T_Marker.Content = t[ToolType.Marker].ToString();
-        Btn_T_Eraser.Content = t[ToolType.Eraser].ToString();
-        Btn_T_Rect.Content = t[ToolType.Rectangle].ToString();
-        Btn_T_Ellipse.Content = t[ToolType.Ellipse].ToString();
-        Btn_T_Line.Content = t[ToolType.Line].ToString();
-        Btn_T_Arrow.Content = t[ToolType.Arrow].ToString();
-        Btn_T_Text.Content = t[ToolType.Text].ToString();
-        Btn_T_Knife.Content = t[ToolType.KnifeDelete].ToString();
-        Btn_T_Move.Content = t[ToolType.Move].ToString();
-        Btn_T_Blur.Content = t[ToolType.Blur].ToString();
-        Btn_T_Eye.Content = t[ToolType.Eyedropper].ToString();
+        // Локальные инструменты (теперь обращаемся по строке)
+        Btn_T_Pencil.Content = t["Pencil"];
+        Btn_T_Brush.Content = t["Brush"];
+        Btn_T_Marker.Content = t["Marker"];
+        Btn_T_Eraser.Content = t["Eraser"];
+        Btn_T_Rect.Content = t["Rectangle"];
+        Btn_T_Ellipse.Content = t["Ellipse"];
+        Btn_T_Line.Content = t["Line"];
+        Btn_T_Arrow.Content = t["Arrow"];
+        Btn_T_Text.Content = t["Text"];
+        Btn_T_Knife.Content = t["KnifeDelete"];
+        Btn_T_Move.Content = t["Move"];
+        Btn_T_Blur.Content = t["Blur"];
+        Btn_T_Eye.Content = t["Eyedropper"];
     }
 
-    // --- Обработка Глобальных Хоткеев ---
+    // --- Глобальные Хоткеи ---
     private void GlobalHotkey_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.Tag is string actionName)
@@ -85,6 +86,9 @@ public partial class OptionsView : UserControl
 
     private void Window_GlobalHotkeyCaptureKeyDown(object sender, KeyEventArgs e)
     {
+        Key key = (e.Key == Key.System) ? e.SystemKey : e.Key;
+        if (IsModifierKey(key)) return;
+
         e.Handled = true;
         UnregisterKeyCapture(sender, Window_GlobalHotkeyCaptureKeyDown);
 
@@ -98,14 +102,12 @@ public partial class OptionsView : UserControl
         if (modifiers.HasFlag(ModifierKeys.Alt)) { win32Modifiers |= 1; display += "Alt + "; }
         if (modifiers.HasFlag(ModifierKeys.Shift)) { win32Modifiers |= 4; display += "Shift + "; }
 
-        Key key = (e.Key == Key.System) ? e.SystemKey : e.Key;
-        uint vk = (uint)KeyInterop.VirtualKeyFromKey(key);
         display += key.ToString();
 
         if (vm.Settings.Hotkeys.TryGetValue(_activeGlobalAction, out var cfg))
         {
             cfg.Modifiers = win32Modifiers;
-            cfg.VirtualKey = vk;
+            cfg.VirtualKey = (uint)KeyInterop.VirtualKeyFromKey(key);
             cfg.DisplayText = display;
             vm.Settings.Save();
         }
@@ -113,10 +115,11 @@ public partial class OptionsView : UserControl
         _activeGlobalAction = null;
         RefreshHotkeyLabels();
 
-        if (sender is MainWindow mw) mw.UpdateGlobalHotkeys();
+        // ФИКС: обращаемся к Owner (MainWindow)
+        if (this.Owner is MainWindow mw) mw.UpdateGlobalHotkeys();
     }
 
-    // --- Обработка Локальных Хоткеев Инструментов ---
+    // --- Локальные Хоткеи Инструментов ---
     private void ToolHotkey_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && Enum.TryParse<ToolType>(btn.Tag.ToString(), out var toolType))
@@ -127,24 +130,50 @@ public partial class OptionsView : UserControl
         }
     }
 
+    private bool IsModifierKey(Key key)
+    {
+        return key == Key.LeftCtrl || key == Key.RightCtrl ||
+               key == Key.LeftAlt || key == Key.RightAlt ||
+               key == Key.LeftShift || key == Key.RightShift ||
+               key == Key.LWin || key == Key.RWin ||
+               key == Key.System || key == Key.DeadCharProcessed;
+    }
+
     private void Window_ToolHotkeyCaptureKeyDown(object sender, KeyEventArgs e)
     {
+        Key key = (e.Key == Key.System) ? e.SystemKey : e.Key;
+        if (IsModifierKey(key)) return;
+
         e.Handled = true;
         UnregisterKeyCapture(sender, Window_ToolHotkeyCaptureKeyDown);
 
         if (_activeToolAction == null || DataContext is not MainViewModel vm) return;
 
-        Key key = (e.Key == Key.System) ? e.SystemKey : e.Key;
+        // 1. Формируем строку комбинации вместе с модификаторами (Ctrl, Alt, Shift)
+        var modifiers = Keyboard.Modifiers;
+        string display = "";
 
-        // Сохраняем как строку (ToString)
-        vm.Settings.ToolHotkeys[_activeToolAction.Value] = key.ToString();
+        if (modifiers.HasFlag(ModifierKeys.Control)) display += "Ctrl + ";
+        if (modifiers.HasFlag(ModifierKeys.Alt)) display += "Alt + ";
+        if (modifiers.HasFlag(ModifierKeys.Shift)) display += "Shift + ";
+
+        display += key.ToString();
+
+        // 2. Пересоздаем словарь, чтобы разорвать ссылочную идентичность. 
+        // Это заставит WPF гарантированно обновить биндинги ToolTip.
+        var updatedHotkeys = new System.Collections.Generic.Dictionary<string, string>(vm.Settings.ToolHotkeys);
+        updatedHotkeys[_activeToolAction.Value.ToString()] = display;
+
+        vm.Settings.ToolHotkeys = updatedHotkeys;
         vm.Settings.Save();
+
+        // 3. Уведомляем интерфейс
+        vm.NotifySettingsChanged();
 
         _activeToolAction = null;
         RefreshHotkeyLabels();
     }
 
-    // --- Вспомогательные методы ---
     private void SetButtonToListenState(Button btn)
     {
         if (Application.Current.Resources["Opt_PressKey"] is string str)
@@ -155,11 +184,11 @@ public partial class OptionsView : UserControl
 
     private void RegisterKeyCapture(KeyEventHandler handler)
     {
-        if (Window.GetWindow(this) is Window window) window.KeyDown += handler;
+        if (Window.GetWindow(this) is Window window) window.PreviewKeyDown += handler; // ИСПОЛЬЗУЕМ PreviewKeyDown
     }
 
     private void UnregisterKeyCapture(object sender, KeyEventHandler handler)
     {
-        if (sender is Window window) window.KeyDown -= handler;
+        if (sender is Window window) window.PreviewKeyDown -= handler;
     }
 }

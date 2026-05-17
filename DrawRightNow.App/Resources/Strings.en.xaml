@@ -13,15 +13,17 @@
     <s:String x:Key="Tip_Text">Text</s:String>
     <s:String x:Key="Tip_Knife">Knife — delete shape on click</s:String>
     <s:String x:Key="Tip_Move">Move</s:String>
-    <s:String x:Key="Tip_Eyedropper">Eyedropper — pick color</s:String>
-    <s:String x:Key="Tip_Blur">Blur region</s:String>
-    <s:String x:Key="Tip_LiveBlur">Live mode blur</s:String>
+    <s:String x:Key="Tip_Eyedropper">Eyedropper — pick color from screen</s:String>
+    <s:String x:Key="Tip_Blur">Blur a screen region</s:String>
+    <s:String x:Key="Tip_LiveBlur">Live mode — keep blurring as content beneath changes</s:String>
     <s:String x:Key="Tip_BlurSigma">Blur strength (sigma)</s:String>
+
     <s:String x:Key="Tip_Undo">Undo</s:String>
     <s:String x:Key="Tip_Redo">Redo</s:String>
     <s:String x:Key="Tip_Clear">Clear canvas</s:String>
     <s:String x:Key="Tip_Save">Save as PNG/JPG</s:String>
     <s:String x:Key="Tip_Copy">Copy to clipboard</s:String>
+    
     <s:String x:Key="Tip_StrokeWidth">Stroke width</s:String>
     <s:String x:Key="Tip_Fill">Fill shapes</s:String>
     <s:String x:Key="Tip_Pin">Pin toolbar</s:String>

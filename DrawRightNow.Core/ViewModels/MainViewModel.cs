@@ -305,6 +305,11 @@ public sealed class MainViewModel : ObservableObject
         if (_tool is not null) { EndStroke(local, constrain); return; }
     }
 
+    public void NotifySettingsChanged()
+    {
+        OnPropertyChanged(nameof(Settings));
+    }
+
     // ---- ITool-flow (Pencil/Brush/Marker/Eraser/Rect/Ellipse/Line/Arrow/Text) ----
 
     private void BeginStroke(PointF p)

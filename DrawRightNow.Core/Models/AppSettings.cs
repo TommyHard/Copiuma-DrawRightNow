@@ -31,21 +31,22 @@ public sealed class AppSettings
         { "Copy",          new HotkeyConfig { Modifiers = 3, VirtualKey = 0x43, DisplayText = "Ctrl + Alt + C" } }
     };
 
-    public Dictionary<ToolType, string> ToolHotkeys { get; set; } = new()
+    // ТЕПЕРЬ ТУТ КЛЮЧ STRING
+    public Dictionary<string, string> ToolHotkeys { get; set; } = new()
     {
-        { ToolType.Pencil, "P" },
-        { ToolType.Brush, "B" },
-        { ToolType.Marker, "M" },
-        { ToolType.Eraser, "E" },
-        { ToolType.Rectangle, "R" },
-        { ToolType.Ellipse, "O" },
-        { ToolType.Line, "L" },
-        { ToolType.Arrow, "A" },
-        { ToolType.Text, "T" },
-        { ToolType.KnifeDelete, "K" },
-        { ToolType.Move, "V" },
-        { ToolType.Eyedropper, "I" },
-        { ToolType.Blur, "U" }
+        { "Pencil", "P" },
+        { "Brush", "B" },
+        { "Marker", "M" },
+        { "Eraser", "E" },
+        { "Rectangle", "R" },
+        { "Ellipse", "O" },
+        { "Line", "L" },
+        { "Arrow", "A" },
+        { "Text", "T" },
+        { "KnifeDelete", "K" },
+        { "Move", "V" },
+        { "Eyedropper", "I" },
+        { "Blur", "U" }
     };
 
     public static AppSettings Load()
