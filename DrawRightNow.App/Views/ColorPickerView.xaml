@@ -1,0 +1,144 @@
+﻿<UserControl x:Class="DrawRightNow.App.Views.ColorPickerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent"
+             Loaded="UserControl_Loaded">
+
+    <UserControl.Resources>
+        <DrawingBrush x:Key="CheckerboardBrush" Viewport="0,0,10,10" ViewportUnits="Absolute" TileMode="Tile">
+            <DrawingBrush.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="#FF4A4A5A">
+                        <GeometryDrawing.Geometry>
+                            <RectangleGeometry Rect="0,0,10,10" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#FF6A6A7A">
+                        <GeometryDrawing.Geometry>
+                            <GeometryGroup>
+                                <RectangleGeometry Rect="0,0,5,5" />
+                                <RectangleGeometry Rect="5,5,5,5" />
+                            </GeometryGroup>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingBrush.Drawing>
+        </DrawingBrush>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#1E1E22"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#4A4A5A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Margin" Value="0,3"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Background="#EE1E1E22" BorderBrush="#FF3A3A40" BorderThickness="1" CornerRadius="8">
+        <Grid Margin="15">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="0,0,0,12">
+                <TextBlock Text="Выбор цвета" Foreground="#CCC" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Button HorizontalAlignment="Right" Content="✕" Width="20" Height="20" Click="CloseButton_Click" Cursor="Hand" ToolTip="Закрыть">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="Transparent" CornerRadius="4" x:Name="bg">
+                                <TextBlock Text="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#AAA" FontSize="12" FontWeight="Bold"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bg" Property="Background" Value="#33FFFFFF"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                <Grid Width="120" Height="120" MouseLeftButtonDown="Wheel_MouseDown" MouseMove="Wheel_MouseMove" MouseLeftButtonUp="Control_MouseUp">
+                    <Image x:Name="WheelImage" Stretch="None"/>
+                    <Canvas>
+                        <Ellipse x:Name="WheelSelector" Width="10" Height="10" Stroke="Black" StrokeThickness="2" Fill="White" Margin="-5,-5,0,0"/>
+                    </Canvas>
+                </Grid>
+
+                <Border x:Name="ValueTrack" Width="20" Height="120" Margin="15,0" BorderBrush="#444" BorderThickness="1" 
+                        MouseLeftButtonDown="Value_MouseDown" MouseMove="Value_MouseMove" MouseLeftButtonUp="Control_MouseUp">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop x:Name="ValueGradStart" Color="Cyan" Offset="0"/>
+                            <GradientStop Color="Black" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Canvas>
+                        <Polygon x:Name="ValueThumbL" Points="-7,-5 0,0 -7,5" Fill="#EEE" Stroke="#222" StrokeThickness="1"/>
+                        <Polygon x:Name="ValueThumbR" Points="25,-5 18,0 25,5" Fill="#EEE" Stroke="#222" StrokeThickness="1"/>
+                    </Canvas>
+                </Border>
+
+                <Border x:Name="AlphaTrack" Width="20" Height="120" Margin="0,0,15,0" BorderBrush="#444" BorderThickness="1" Background="{StaticResource CheckerboardBrush}"
+                        MouseLeftButtonDown="Alpha_MouseDown" MouseMove="Alpha_MouseMove" MouseLeftButtonUp="Control_MouseUp">
+                    <Border>
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop x:Name="AlphaGradStart" Color="Cyan" Offset="0"/>
+                                <GradientStop x:Name="AlphaGradEnd" Color="Transparent" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Canvas>
+                            <Polygon x:Name="AlphaThumbL" Points="-7,-5 0,0 -7,5" Fill="#EEE" Stroke="#222" StrokeThickness="1"/>
+                            <Polygon x:Name="AlphaThumbR" Points="25,-5 18,0 25,5" Fill="#EEE" Stroke="#222" StrokeThickness="1"/>
+                        </Canvas>
+                    </Border>
+                </Border>
+
+                <StackPanel VerticalAlignment="Top" Width="100">
+                    <Border Width="46" Height="46" HorizontalAlignment="Left" Background="{StaticResource CheckerboardBrush}" BorderBrush="#4A4A5A" BorderThickness="1" Margin="0,0,0,10">
+                        <Border x:Name="PreviewBorder"/>
+                    </Border>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="#" Foreground="#AAA" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding StrokeColorHex, UpdateSourceTrigger=LostFocus}" KeyDown="TextBox_KeyDown" Grid.Column="1" MaxLength="9"/>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="R" Foreground="#AAA" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding StrokeColorR, UpdateSourceTrigger=LostFocus}" KeyDown="TextBox_KeyDown" Grid.Column="1"/>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="G" Foreground="#AAA" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding StrokeColorG, UpdateSourceTrigger=LostFocus}" KeyDown="TextBox_KeyDown" Grid.Column="1"/>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="B" Foreground="#AAA" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding StrokeColorB, UpdateSourceTrigger=LostFocus}" KeyDown="TextBox_KeyDown" Grid.Column="1"/>
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

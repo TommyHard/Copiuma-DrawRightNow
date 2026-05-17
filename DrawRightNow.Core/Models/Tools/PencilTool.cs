@@ -34,7 +34,7 @@ public sealed class PencilTool : ITool
         return _current;
     }
 
-    public void OnPointerMove(PointF p)
+    public void OnPointerMove(PointF p, bool constrain = false)
     {
         if (_current is null) return;
         if (p.Distance(_lastPoint) < 1.5f) return;
@@ -42,7 +42,7 @@ public sealed class PencilTool : ITool
         _lastPoint = p;
     }
 
-    public IShape? OnPointerUp(PointF p)
+    public IShape? OnPointerUp(PointF p, bool constrain = false)
     {
         if (_current is null) return null;
         if (p.Distance(_lastPoint) >= 0.5f) _current.AddPoint(p);

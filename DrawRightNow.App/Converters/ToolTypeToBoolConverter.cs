@@ -25,10 +25,10 @@ public sealed class ToolTypeToBoolConverter : IValueConverter
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is bool b && b && parameter is string name &&
+        if (value is bool b && parameter is string name &&
             Enum.TryParse<ToolType>(name, out var target))
         {
-            return target;
+            return b ? target : ToolType.None;
         }
         return Binding.DoNothing;
     }

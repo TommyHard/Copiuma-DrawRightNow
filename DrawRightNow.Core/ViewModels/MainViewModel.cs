@@ -21,15 +21,17 @@ public sealed class MainViewModel : ObservableObject
     private readonly RelayCommand _clearCmd;
 
     private ITool? _tool;
+    private bool _isOptionsOpen;
     private ToolType _activeTool = ToolType.Pencil;
     private ColorRgba _strokeColor = ColorRgba.Red;
     private float _strokeWidth = 3f;
     private bool _isToolbarPinned = true;        // По умолчанию тулбар закреплён — иначе при запуске не видно ничего
     private bool _isDrawingEnabled = true;
     private bool _toolbarTranslucent = false;    // Тогл "панель сквозь" — opacity 1.0/0.45
-    private bool _overlayDimEnabled = false;     // Видимая полупрозрачная подложка холста
+    private bool _overlayDimEnabled = true;     // Видимая полупрозрачная подложка холста
     private bool _fillEnabled = false;
     private bool _liveBlurEnabled = false;
+    private bool _isColorPickerOpen;
     private TextShape? _editingText;
 
     // Move state
@@ -43,6 +45,10 @@ public sealed class MainViewModel : ObservableObject
     private PointF _blurStartScreen;
     private RectangleShape? _blurPreview;
     private float _blurSigma = 16f;
+
+    public AppSettings Settings { get; } = AppSettings.Load();
+
+    public bool IsToolVisible(ToolType tool) => Settings.VisibleTools.Contains(tool);
 
     public MainViewModel()
     {
@@ -89,6 +95,47 @@ public sealed class MainViewModel : ObservableObject
         set => SetField(ref _liveBlurEnabled, value);
     }
 
+    public bool IsOptionsOpen
+    {
+        get => _isOptionsOpen;
+        set => SetField(ref _isOptionsOpen, value);
+    }
+
+    public void ToggleToolVisibility(ToolType tool, bool isVisible)
+    {
+        if (isVisible && !Settings.VisibleTools.Contains(tool)) Settings.VisibleTools.Add(tool);
+        else if (!isVisible) Settings.VisibleTools.Remove(tool);
+
+        Settings.Save();
+        OnPropertyChanged($"Show_{tool}");
+    }
+
+    public bool IsColorPickerOpen
+    {
+        get => _isColorPickerOpen;
+        set => SetField(ref _isColorPickerOpen, value);
+    }
+
+    public bool Show_Pencil { get => IsToolVisible(ToolType.Pencil); set => ToggleToolVisibility(ToolType.Pencil, value); }
+    public bool Show_Brush { get => IsToolVisible(ToolType.Brush); set => ToggleToolVisibility(ToolType.Brush, value); }
+    public bool Show_Marker { get => IsToolVisible(ToolType.Marker); set => ToggleToolVisibility(ToolType.Marker, value); }
+    public bool Show_Eraser { get => IsToolVisible(ToolType.Eraser); set => ToggleToolVisibility(ToolType.Eraser, value); }
+    public bool Show_Rectangle { get => IsToolVisible(ToolType.Rectangle); set => ToggleToolVisibility(ToolType.Rectangle, value); }
+    public bool Show_Ellipse { get => IsToolVisible(ToolType.Ellipse); set => ToggleToolVisibility(ToolType.Ellipse, value); }
+    public bool Show_Line { get => IsToolVisible(ToolType.Line); set => ToggleToolVisibility(ToolType.Line, value); }
+    public bool Show_Arrow { get => IsToolVisible(ToolType.Arrow); set => ToggleToolVisibility(ToolType.Arrow, value); }
+    public bool Show_Text { get => IsToolVisible(ToolType.Text); set => ToggleToolVisibility(ToolType.Text, value); }
+    public bool Show_KnifeDelete { get => IsToolVisible(ToolType.KnifeDelete); set => ToggleToolVisibility(ToolType.KnifeDelete, value); }
+    public bool Show_Move { get => IsToolVisible(ToolType.Move); set => ToggleToolVisibility(ToolType.Move, value); }
+    public bool Show_Eyedropper { get => IsToolVisible(ToolType.Eyedropper); set => ToggleToolVisibility(ToolType.Eyedropper, value); }
+    public bool Show_Blur { get => IsToolVisible(ToolType.Blur); set => ToggleToolVisibility(ToolType.Blur, value); }
+
+    public bool ShowInTray
+    {
+        get => Settings.ShowInTray;
+        set { Settings.ShowInTray = value; Settings.Save(); OnPropertyChanged(); }
+    }
+
     public RelayCommand UndoCommand => _undoCmd;
     public RelayCommand RedoCommand => _redoCmd;
     public RelayCommand ClearCommand => _clearCmd;
@@ -99,7 +146,19 @@ public sealed class MainViewModel : ObservableObject
         set
         {
             if (SetField(ref _activeTool, value))
+            {
                 OnPropertyChanged(nameof(ActiveToolDisplayName));
+
+                // Включаем или выключаем режим рисования в зависимости от выбранного инструмента
+                if (_activeTool == ToolType.None)
+                {
+                    IsDrawingEnabled = false;
+                }
+                else if (!IsDrawingEnabled)
+                {
+                    IsDrawingEnabled = true;
+                }
+            }
         }
     }
 
@@ -108,7 +167,43 @@ public sealed class MainViewModel : ObservableObject
     public ColorRgba StrokeColor
     {
         get => _strokeColor;
-        set => SetField(ref _strokeColor, value);
+        set
+        {
+            if (SetField(ref _strokeColor, value))
+            {
+                OnPropertyChanged(nameof(StrokeColorHex));
+                OnPropertyChanged(nameof(StrokeColorR));
+                OnPropertyChanged(nameof(StrokeColorG));
+                OnPropertyChanged(nameof(StrokeColorB));
+            }
+        }
+    }
+
+    public string StrokeColorHex
+    {
+        get => $"#{_strokeColor.R:X2}{_strokeColor.G:X2}{_strokeColor.B:X2}";
+        set
+        {
+            try { StrokeColor = ColorRgba.FromHex(value).WithAlpha(_strokeColor.A); } catch { /* ignore */ }
+        }
+    }
+
+    public byte StrokeColorR
+    {
+        get => _strokeColor.R;
+        set => StrokeColor = new ColorRgba(value, _strokeColor.G, _strokeColor.B, _strokeColor.A);
+    }
+
+    public byte StrokeColorG
+    {
+        get => _strokeColor.G;
+        set => StrokeColor = new ColorRgba(_strokeColor.R, value, _strokeColor.B, _strokeColor.A);
+    }
+
+    public byte StrokeColorB
+    {
+        get => _strokeColor.B;
+        set => StrokeColor = new ColorRgba(_strokeColor.R, _strokeColor.G, value, _strokeColor.A);
     }
 
     public float StrokeWidth
@@ -196,18 +291,18 @@ public sealed class MainViewModel : ObservableObject
         BeginStroke(local);
     }
 
-    public void OnInputMove(PointF local, PointF screen)
+    public void OnInputMove(PointF local, PointF screen, bool constrain = false)
     {
         if (_movingShape is not null) { ContinueMove(local); return; }
-        if (_blurInProgress) { ContinueBlur(local); return; }
-        if (_tool is not null) { ContinueStroke(local); return; }
+        if (_blurInProgress) { ContinueBlur(local, constrain); return; }
+        if (_tool is not null) { ContinueStroke(local, constrain); return; }
     }
 
-    public void OnInputUp(PointF local, PointF screen)
+    public void OnInputUp(PointF local, PointF screen, bool constrain = false)
     {
         if (_movingShape is not null) { EndMove(local); return; }
-        if (_blurInProgress) { EndBlur(local, screen); return; }
-        if (_tool is not null) { EndStroke(local); return; }
+        if (_blurInProgress) { EndBlur(local, screen, constrain); return; }
+        if (_tool is not null) { EndStroke(local, constrain); return; }
     }
 
     // ---- ITool-flow (Pencil/Brush/Marker/Eraser/Rect/Ellipse/Line/Arrow/Text) ----
@@ -221,17 +316,17 @@ public sealed class MainViewModel : ObservableObject
         if (shape is not null) Canvas.BeginPending(shape);
     }
 
-    private void ContinueStroke(PointF p)
+    private void ContinueStroke(PointF p, bool constrain)
     {
         if (_tool is null) return;
-        _tool.OnPointerMove(p);
+        _tool.OnPointerMove(p, constrain);
         Canvas.UpdatePending();
     }
 
-    private void EndStroke(PointF p)
+    private void EndStroke(PointF p, bool constrain)
     {
         if (_tool is null) return;
-        IShape? shape = _tool.OnPointerUp(p);
+        IShape? shape = _tool.OnPointerUp(p, constrain);
         _tool = null;
         Canvas.CancelPending();
         if (shape is null) return;
@@ -321,15 +416,40 @@ public sealed class MainViewModel : ObservableObject
         Canvas.BeginPending(_blurPreview);
     }
 
-    private void ContinueBlur(PointF local)
+    private void ContinueBlur(PointF local, bool constrain)
     {
         if (_blurPreview is null) return;
+
+        if (constrain)
+        {
+            var dx = local.X - _blurStartLocal.X;
+            var dy = local.Y - _blurStartLocal.Y;
+            var max = MathF.Max(MathF.Abs(dx), MathF.Abs(dy));
+            float signX = dx >= 0 ? 1f : -1f;
+            float signY = dy >= 0 ? 1f : -1f;
+            local = new PointF(_blurStartLocal.X + signX * max, _blurStartLocal.Y + signY * max);
+        }
+
         _blurPreview.SetEnd(local);
         Canvas.UpdatePending();
     }
 
-    private void EndBlur(PointF local, PointF screen)
+    private void EndBlur(PointF local, PointF screen, bool constrain)
     {
+        if (constrain)
+        {
+            var dx = local.X - _blurStartLocal.X;
+            var dy = local.Y - _blurStartLocal.Y;
+            var max = MathF.Max(MathF.Abs(dx), MathF.Abs(dy));
+            float signX = dx >= 0 ? 1f : -1f;
+            float signY = dy >= 0 ? 1f : -1f;
+            var newLocal = new PointF(_blurStartLocal.X + signX * max, _blurStartLocal.Y + signY * max);
+
+            screen = new PointF(_blurStartScreen.X + (newLocal.X - _blurStartLocal.X),
+                                _blurStartScreen.Y + (newLocal.Y - _blurStartLocal.Y));
+            local = newLocal;
+        }
+
         var preview = _blurPreview;
         _blurPreview = null;
         _blurInProgress = false;

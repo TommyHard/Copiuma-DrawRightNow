@@ -22,9 +22,9 @@ public sealed class TextTool : ITool
         return _current;
     }
 
-    public void OnPointerMove(PointF p) { /* ignore */ }
+    public void OnPointerMove(PointF p, bool constrain = false) { /* ignore */ }
 
-    public IShape? OnPointerUp(PointF p)
+    public IShape? OnPointerUp(PointF p, bool constrain = false)
     {
         var result = _current;
         _current = null;

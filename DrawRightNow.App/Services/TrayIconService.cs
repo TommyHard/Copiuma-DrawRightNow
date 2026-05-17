@@ -1,6 +1,4 @@
-﻿using System;
-using System.Drawing;
-using System.Windows;
+﻿using System.Windows;
 using WinForms = System.Windows.Forms;
 
 namespace DrawRightNow.App.Services;
@@ -14,6 +12,12 @@ public sealed class TrayIconService : IDisposable
     private readonly WinForms.NotifyIcon _icon;
     private bool _disposed;
 
+    public bool IsVisible
+    {
+        get => _icon.Visible;
+        set => _icon.Visible = value;
+    }
+
     public TrayIconService(Window window)
     {
         _window = window ?? throw new ArgumentNullException(nameof(window));
@@ -22,7 +26,7 @@ public sealed class TrayIconService : IDisposable
         {
             Visible = true,
             Text = "DrawRightNow",
-            Icon = SystemIcons.Application
+            Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location)
         };
 
         var menu = new WinForms.ContextMenuStrip();

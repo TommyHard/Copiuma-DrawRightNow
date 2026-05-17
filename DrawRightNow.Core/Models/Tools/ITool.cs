@@ -21,10 +21,10 @@ public interface ITool
     /// <summary>
     /// Продолжение жеста. Должен работать без аллокаций
     /// </summary>
-    void OnPointerMove(PointF p);
+    void OnPointerMove(PointF p, bool constrain = false);
 
     /// <summary>
     /// Завершение жеста. Возвращает финальную фигуру (или null, если жест отменён)
     /// </summary>
-    IShape? OnPointerUp(PointF p);
+    IShape? OnPointerUp(PointF p, bool constrain = false);
 }

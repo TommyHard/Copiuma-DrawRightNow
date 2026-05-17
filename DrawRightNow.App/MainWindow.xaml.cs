@@ -47,8 +47,7 @@ public partial class MainWindow : Window
         {
             // По умолчанию IsToolbarPinned=true -> панель видна сразу.
             // Если пользователь снимет «закрепить», панель будет авто-скрываться
-            if (_vm.IsToolbarPinned) ShowToolbar(); else HideToolbar(animated: false);
-            ApplyToolbarOpacity();
+            UpdateToolbarState(animated: false);
             ApplyDimLayerVisibility();
         };
         Closing += OnClosing;
@@ -82,6 +81,8 @@ public partial class MainWindow : Window
         // Глобальные хоткеи: Ctrl+Alt+* (Win+Shift+* конфликтует с системой)
         _hotkeys = new HotkeyManager(_hwnd);
         source?.AddHook(_hotkeys.WndProc);
+
+        UpdateGlobalHotkeys();
 
         const uint VK_D = 0x44, VK_E = 0x45, VK_Z = 0x5A, VK_Y = 0x59, VK_C = 0x43;
         const uint CTRL_ALT = NativeMethods.MOD_CONTROL | NativeMethods.MOD_ALT;
@@ -145,10 +146,10 @@ public partial class MainWindow : Window
         {
             // click-through решается в WM_NCHITTEST-hook
         }
-        else if (e.PropertyName == nameof(MainViewModel.IsToolbarPinned))
+        else if (e.PropertyName == nameof(MainViewModel.IsToolbarPinned) ||
+                 e.PropertyName == nameof(MainViewModel.ToolbarTranslucent))
         {
-            if (_vm.IsToolbarPinned) ShowToolbar();
-            else HideToolbar();
+            UpdateToolbarState();
         }
         else if (e.PropertyName == nameof(MainViewModel.EditingText))
         {
@@ -158,24 +159,23 @@ public partial class MainWindow : Window
         {
             UpdateEyedropperOverlayVisibility();
         }
-        else if (e.PropertyName == nameof(MainViewModel.ToolbarTranslucent))
-        {
-            ApplyToolbarOpacity();
-        }
         else if (e.PropertyName == nameof(MainViewModel.OverlayDimEnabled))
         {
             ApplyDimLayerVisibility();
         }
-    }
-
-    private void ApplyToolbarOpacity()
-    {
-        // 1.0 — обычная, 0.45 — полупрозрачная (чтобы видеть под ней содержимое)
-        var target = _vm.ToolbarTranslucent ? 0.45 : 1.0;
-        if (_toolbarVisible)
-            ToolbarHost.Opacity = target;
-        // Если тулбар сейчас скрыт — анимация opacity активирует его сама,
-        // здесь только запоминаем целевой уровень. ShowToolbar() читает _vm
+        else if (e.PropertyName == nameof(MainViewModel.LiveBlurEnabled))
+        {
+            // При первом (и последующих) включениях LiveBlur применяем ExcludeFromCapture,
+            // чтобы окно приложения больше не попадало в API захвата экрана Windows
+            if (_vm.LiveBlurEnabled)
+            {
+                OverlayWindowHelper.ExcludeFromCapture(_hwnd);
+            }
+        }
+        else if (e.PropertyName == nameof(MainViewModel.ShowInTray))
+        {
+            if (_tray != null) _tray.IsVisible = _vm.ShowInTray;
+        }
     }
 
     private void ApplyDimLayerVisibility()
@@ -247,18 +247,25 @@ public partial class MainWindow : Window
     // ---- Toolbar auto-show ----
 
     private bool _toolbarVisible;
+    private bool _isHoveringToolbar;
 
-    private void HoverStrip_MouseEnter(object sender, MouseEventArgs e) => ShowToolbar();
+    private void HoverStrip_MouseEnter(object sender, MouseEventArgs e)
+    {
+        _isHoveringToolbar = true;
+        UpdateToolbarState();
+    }
 
     private void OnAnyMouseMove(object sender, MouseEventArgs e)
     {
         var p = e.GetPosition(this);
 
-        // Скрытие/появление тулбара
-        if (!_vm.IsToolbarPinned)
+        // Проверяем, находится ли мышь над тулбаром
+        bool overToolbar = p.Y < (ToolbarHost.ActualHeight + ToolbarHost.Margin.Top + 12);
+
+        if (overToolbar != _isHoveringToolbar)
         {
-            var overToolbar = p.Y < (ToolbarHost.ActualHeight + ToolbarHost.Margin.Top + 12);
-            if (_toolbarVisible && !overToolbar) HideToolbar();
+            _isHoveringToolbar = overToolbar;
+            UpdateToolbarState();
         }
 
         // Live-превью цвета для Eyedropper
@@ -275,63 +282,109 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ShowToolbar()
+    private void UpdateToolbarState(bool animated = true)
     {
-        if (_toolbarVisible) return;
-        _toolbarVisible = true;
-        var target = _vm.ToolbarTranslucent ? 0.45 : 1.0;
-        ToolbarHost.BeginAnimation(OpacityProperty,
-            new DoubleAnimation(target, TimeSpan.FromMilliseconds(120)));
-        ToolbarHost.IsHitTestVisible = true;
-    }
-
-    private void HideToolbar(bool animated = true)
-    {
-        _toolbarVisible = false;
-        if (_vm.IsToolbarPinned) { ShowToolbar(); return; }
-
-        if (animated)
+        if (_vm.IsToolbarPinned)
         {
-            ToolbarHost.BeginAnimation(OpacityProperty,
-                new DoubleAnimation(0.0, TimeSpan.FromMilliseconds(180)));
+            _toolbarVisible = true;
+            ToolbarHost.IsHitTestVisible = true;
+
+            // Если полупрозрачность включена и мышь убрана — 0.45, иначе 1.0
+            double target = (_isHoveringToolbar || !_vm.ToolbarTranslucent) ? 1.0 : 0.45;
+
+            if (animated)
+                ToolbarHost.BeginAnimation(OpacityProperty, new DoubleAnimation(target, TimeSpan.FromMilliseconds(120)));
+            else
+            {
+                ToolbarHost.BeginAnimation(OpacityProperty, null);
+                ToolbarHost.Opacity = target;
+            }
         }
         else
         {
-            ToolbarHost.Opacity = 0.0;
+            if (_isHoveringToolbar)
+            {
+                _toolbarVisible = true;
+                ToolbarHost.IsHitTestVisible = true;
+
+                if (animated)
+                    ToolbarHost.BeginAnimation(OpacityProperty, new DoubleAnimation(1.0, TimeSpan.FromMilliseconds(120)));
+                else
+                {
+                    ToolbarHost.BeginAnimation(OpacityProperty, null);
+                    ToolbarHost.Opacity = 1.0;
+                }
+            }
+            else
+            {
+                _toolbarVisible = false;
+                ToolbarHost.IsHitTestVisible = false;
+
+                if (animated)
+                    ToolbarHost.BeginAnimation(OpacityProperty, new DoubleAnimation(0.0, TimeSpan.FromMilliseconds(180)));
+                else
+                {
+                    ToolbarHost.BeginAnimation(OpacityProperty, null);
+                    ToolbarHost.Opacity = 0.0;
+                }
+            }
         }
-        ToolbarHost.IsHitTestVisible = false;
     }
 
     // ---- Hotkeys (когда окно в фокусе) ----
+
+    public void UpdateGlobalHotkeys()
+    {
+        if (_hotkeys == null) return;
+
+        // Сбрасываем старые
+        _hotkeys.ClearAll();
+
+        var h = _vm.Settings.Hotkeys;
+
+        if (h.TryGetValue("ToggleOverlay", out var c1))
+            _hotkeys.Register(1, c1.Modifiers, c1.VirtualKey, () => { if (IsVisible) Hide(); else { Show(); Activate(); } });
+
+        if (h.TryGetValue("ToggleDrawing", out var c2))
+            _hotkeys.Register(2, c2.Modifiers, c2.VirtualKey, () => _vm.IsDrawingEnabled = !_vm.IsDrawingEnabled);
+
+        if (h.TryGetValue("Undo", out var c3))
+            _hotkeys.Register(3, c3.Modifiers, c3.VirtualKey, () => { if (_vm.UndoCommand.CanExecute(null)) _vm.UndoCommand.Execute(null); });
+
+        if (h.TryGetValue("Redo", out var c4))
+            _hotkeys.Register(4, c4.Modifiers, c4.VirtualKey, () => { if (_vm.RedoCommand.CanExecute(null)) _vm.RedoCommand.Execute(null); });
+
+        if (h.TryGetValue("Copy", out var c5))
+            _hotkeys.Register(5, c5.Modifiers, c5.VirtualKey, () => CopyCanvasToClipboard());
+    }
 
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
         if (_vm.EditingText is not null) return;
 
-        switch (e.Key)
+        // Встроенные системные
+        if (e.Key == Key.F8) { _vm.IsDrawingEnabled = !_vm.IsDrawingEnabled; e.Handled = true; return; }
+        if (e.Key == Key.Escape)
         {
-            case Key.P: _vm.ActiveTool = ToolType.Pencil; e.Handled = true; break;
-            case Key.B: _vm.ActiveTool = ToolType.Brush; e.Handled = true; break;
-            case Key.M: _vm.ActiveTool = ToolType.Marker; e.Handled = true; break;
-            case Key.E: _vm.ActiveTool = ToolType.Eraser; e.Handled = true; break;
-            case Key.R: _vm.ActiveTool = ToolType.Rectangle; e.Handled = true; break;
-            case Key.O: _vm.ActiveTool = ToolType.Ellipse; e.Handled = true; break;
-            case Key.L: _vm.ActiveTool = ToolType.Line; e.Handled = true; break;
-            case Key.A: _vm.ActiveTool = ToolType.Arrow; e.Handled = true; break;
-            case Key.T: _vm.ActiveTool = ToolType.Text; e.Handled = true; break;
-            case Key.K: _vm.ActiveTool = ToolType.KnifeDelete; e.Handled = true; break;
-            case Key.V: _vm.ActiveTool = ToolType.Move; e.Handled = true; break;
-            case Key.I: _vm.ActiveTool = ToolType.Eyedropper; e.Handled = true; break;
-            case Key.U: _vm.ActiveTool = ToolType.Blur; e.Handled = true; break;
-            case Key.F8:
-                _vm.IsDrawingEnabled = !_vm.IsDrawingEnabled;
+            if (_vm.IsToolbarPinned) _vm.IsToolbarPinned = false;
+            else Close();
+            e.Handled = true;
+            return;
+        }
+
+        // Получаем текстовое представление нажатой клавиши
+        Key key = (e.Key == Key.System) ? e.SystemKey : e.Key;
+        string keyStr = key.ToString();
+
+        // Динамические хоткеи инструментов
+        foreach (var kvp in _vm.Settings.ToolHotkeys)
+        {
+            if (kvp.Value == keyStr)
+            {
+                _vm.ActiveTool = kvp.Key;
                 e.Handled = true;
-                break;
-            case Key.Escape:
-                if (_vm.IsToolbarPinned) _vm.IsToolbarPinned = false;
-                else Close();
-                e.Handled = true;
-                break;
+                return;
+            }
         }
     }
 

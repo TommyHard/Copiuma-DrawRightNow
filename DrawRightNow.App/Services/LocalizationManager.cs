@@ -38,7 +38,7 @@ public static class LocalizationManager
         foreach (var d in existing) resources.Remove(d);
 
         var uri = new Uri(
-            $"pack://application:,,,/DrawRightNow.App;component/Resources/Strings.{lang}.xaml",
+            $"pack://application:,,,/Copiuma.DrawRightNow;component/Resources/Strings.{lang}.xaml",
             UriKind.Absolute);
         var dict = new ResourceDictionary { Source = uri };
         resources.Add(dict);

@@ -31,6 +31,13 @@ public sealed class HotkeyManager : IDisposable
         return true;
     }
 
+    public void ClearAll()
+    {
+        foreach (var id in _handlers.Keys)
+            NativeMethods.UnregisterHotKey(_hwnd, id);
+        _handlers.Clear();
+    }
+
     /// <summary>
     /// WndProc-hook: возвращает (IntPtr.Zero, handled=true) для обработанных WM_HOTKEY
     /// </summary>

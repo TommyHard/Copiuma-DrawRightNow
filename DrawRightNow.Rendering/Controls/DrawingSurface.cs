@@ -123,7 +123,8 @@ public class DrawingSurface : SKElement
 
         var local = e.GetPosition(this);
         var screen = PointToScreen(local);
-        vm.OnInputMove(ToCanvas(local), ToCanvas(screen));
+        bool constrain = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+        vm.OnInputMove(ToCanvas(local), ToCanvas(screen), constrain);
     }
 
     protected override void OnMouseUp(MouseButtonEventArgs e)
@@ -134,7 +135,8 @@ public class DrawingSurface : SKElement
 
         var local = e.GetPosition(this);
         var screen = PointToScreen(local);
-        vm.OnInputUp(ToCanvas(local), ToCanvas(screen));
+        bool constrain = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+        vm.OnInputUp(ToCanvas(local), ToCanvas(screen), constrain);
         if (IsMouseCaptured) ReleaseMouseCapture();
         e.Handled = true;
     }

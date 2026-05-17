@@ -1,62 +1,75 @@
 ﻿<UserControl x:Class="DrawRightNow.App.Views.ToolbarView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:conv="clr-namespace:DrawRightNow.App.Converters"
+             xmlns:conv="clr-namespace:DrawRightNow.App.Converters" 
+             xmlns:views="clr-namespace:DrawRightNow.App.Views"
              Background="Transparent">
     <UserControl.Resources>
         <conv:ToolTypeToBoolConverter x:Key="ToolConv"/>
+        <conv:RgbaToMediaColorConverter x:Key="RgbaToMediaColorConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
     <Border Style="{StaticResource Toolbar}">
         <StackPanel Orientation="Horizontal">
 
-            <!-- Инструменты рисования -->
             <ToggleButton Style="{StaticResource ToolButton}" Content="✎"
                           ToolTip="{DynamicResource Tip_Pencil}"
+                          Visibility="{Binding Show_Pencil, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Pencil, Mode=TwoWay}"/>
             <ToggleButton Style="{StaticResource ToolButton}" Content="🖌"
                           ToolTip="{DynamicResource Tip_Brush}"
+                          Visibility="{Binding Show_Brush, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Brush, Mode=TwoWay}"/>
             <ToggleButton Style="{StaticResource ToolButton}" Content="▮"
                           ToolTip="{DynamicResource Tip_Marker}"
+                          Visibility="{Binding Show_Marker, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Marker, Mode=TwoWay}"/>
             <ToggleButton Style="{StaticResource ToolButton}" Content="⌫"
                           ToolTip="{DynamicResource Tip_Eraser}"
+                          Visibility="{Binding Show_Eraser, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Eraser, Mode=TwoWay}"/>
 
-            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
 
-            <!-- Геометрические фигуры -->
             <ToggleButton Style="{StaticResource ToolButton}" Content="▭"
                           ToolTip="{DynamicResource Tip_Rectangle}"
+                          Visibility="{Binding Show_Rectangle, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Rectangle, Mode=TwoWay}"/>
             <ToggleButton Style="{StaticResource ToolButton}" Content="◯"
                           ToolTip="{DynamicResource Tip_Ellipse}"
+                          Visibility="{Binding Show_Ellipse, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Ellipse, Mode=TwoWay}"/>
             <ToggleButton Style="{StaticResource ToolButton}" Content="╱"
                           ToolTip="{DynamicResource Tip_Line}"
+                          Visibility="{Binding Show_Line, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Line, Mode=TwoWay}"/>
             <ToggleButton Style="{StaticResource ToolButton}" Content="→"
                           ToolTip="{DynamicResource Tip_Arrow}"
+                          Visibility="{Binding Show_Arrow, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Arrow, Mode=TwoWay}"/>
             <ToggleButton Style="{StaticResource ToolButton}" Content="T"
                           ToolTip="{DynamicResource Tip_Text}"
+                          Visibility="{Binding Show_Text, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Text, Mode=TwoWay}"/>
 
-            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
 
-            <!-- Манипуляции -->
             <ToggleButton Style="{StaticResource ToolButton}" Content="✂"
                           ToolTip="{DynamicResource Tip_Knife}"
+                          Visibility="{Binding Show_KnifeDelete, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=KnifeDelete, Mode=TwoWay}"/>
             <ToggleButton Style="{StaticResource ToolButton}" Content="✥"
                           ToolTip="{DynamicResource Tip_Move}"
+                          Visibility="{Binding Show_Move, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Move, Mode=TwoWay}"/>
             <ToggleButton Style="{StaticResource ToolButton}" Content="💧"
                           ToolTip="{DynamicResource Tip_Eyedropper}"
+                          Visibility="{Binding Show_Eyedropper, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Eyedropper, Mode=TwoWay}"/>
             <ToggleButton Style="{StaticResource ToolButton}" Content="◐"
                           ToolTip="{DynamicResource Tip_Blur}"
+                          Visibility="{Binding Show_Blur, Converter={StaticResource BoolToVis}}"
                           IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Blur, Mode=TwoWay}"/>
             <ToggleButton Style="{StaticResource ToolButton}" Content="◌"
                           ToolTip="{DynamicResource Tip_LiveBlur}"
@@ -66,9 +79,8 @@
                     ToolTip="{DynamicResource Tip_BlurSigma}"
                     Value="{Binding BlurSigma, Mode=TwoWay}"/>
 
-            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
 
-            <!-- История + экспорт -->
             <Button Style="{StaticResource FlatButton}" Content="↶"
                     ToolTip="{DynamicResource Tip_Undo}"  Command="{Binding UndoCommand}"/>
             <Button Style="{StaticResource FlatButton}" Content="↷"
@@ -80,9 +92,8 @@
             <Button Style="{StaticResource FlatButton}" Content="📋"
                     ToolTip="{DynamicResource Tip_Copy}"  Click="Copy_Click"/>
 
-            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
 
-            <!-- Толщина + заливка -->
             <Slider x:Name="WidthSlider"
                     Width="80" Margin="6,0" VerticalAlignment="Center"
                     Minimum="1" Maximum="24"
@@ -92,25 +103,27 @@
                           ToolTip="{DynamicResource Tip_Fill}"
                           IsChecked="{Binding FillEnabled, Mode=TwoWay}"/>
 
-            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
 
-            <!-- Палитра -->
-            <Button Style="{StaticResource FlatButton}" Tag="Red"    Background="#E74C3C"
-                    ToolTip="{DynamicResource Tip_ColorRed}"    Click="ColorButton_Click"/>
-            <Button Style="{StaticResource FlatButton}" Tag="Green"  Background="#2ECC71"
-                    ToolTip="{DynamicResource Tip_ColorGreen}"  Click="ColorButton_Click"/>
-            <Button Style="{StaticResource FlatButton}" Tag="Blue"   Background="#3498DB"
-                    ToolTip="{DynamicResource Tip_ColorBlue}"   Click="ColorButton_Click"/>
-            <Button Style="{StaticResource FlatButton}" Tag="Yellow" Background="#F1C40F"
-                    ToolTip="{DynamicResource Tip_ColorYellow}" Click="ColorButton_Click"/>
-            <Button Style="{StaticResource FlatButton}" Tag="Black"  Background="#000000"
-                    ToolTip="{DynamicResource Tip_ColorBlack}"  Click="ColorButton_Click"/>
-            <Button Style="{StaticResource FlatButton}" Tag="White"  Background="#FFFFFF"
-                    ToolTip="{DynamicResource Tip_ColorWhite}"  Click="ColorButton_Click"/>
+            <ToggleButton x:Name="ColorPickerButton" Style="{StaticResource ToolButton}" Width="34" Height="34" 
+                          IsChecked="{Binding IsColorPickerOpen, Mode=TwoWay}">
+                <ToggleButton.Background>
+                    <SolidColorBrush Color="{Binding StrokeColor, Converter={StaticResource RgbaToMediaColorConverter}}"/>
+                </ToggleButton.Background>
+            </ToggleButton>
 
-            <Separator Width="1" Margin="6,4" Background="{StaticResource ToolbarBorder}"/>
+            <Popup IsOpen="{Binding IsColorPickerOpen}" 
+                   PlacementTarget="{Binding ElementName=ColorPickerButton}" 
+                   Placement="Bottom" 
+                   VerticalOffset="12" 
+                   AllowsTransparency="True" 
+                   PopupAnimation="Fade"
+                   StaysOpen="False">
+                <views:ColorPickerView DataContext="{Binding}"/>
+            </Popup>
 
-            <!-- Системные -->
+            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
+
             <ToggleButton Style="{StaticResource ToolButton}" Content="📌"
                           ToolTip="{DynamicResource Tip_Pin}"
                           IsChecked="{Binding IsToolbarPinned, Mode=TwoWay}"/>
@@ -123,12 +136,28 @@
             <ToggleButton Style="{StaticResource ToolButton}" Content="✋"
                           ToolTip="{DynamicResource Tip_DrawingEnabled}"
                           IsChecked="{Binding IsDrawingEnabled, Mode=TwoWay}"/>
-            <Button Style="{StaticResource FlatButton}" Content="🌐"
-                    ToolTip="{DynamicResource Tip_Language}"
-                    Click="Language_Click"/>
+            
+            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
+
+            <ToggleButton x:Name="OptionsButton" Style="{StaticResource ToolButton}" Content="⚙" 
+                          IsChecked="{Binding IsOptionsOpen, Mode=TwoWay}" ToolTip="Опции приложения"/>
+
+            <Popup IsOpen="{Binding IsOptionsOpen}" 
+                   PlacementTarget="{Binding ElementName=OptionsButton}" 
+                   Placement="Bottom" 
+                   VerticalOffset="12" 
+                   AllowsTransparency="True" 
+                   PopupAnimation="Fade"
+                   StaysOpen="False">
+                <views:OptionsView DataContext="{Binding}"/>
+            </Popup>
+
+            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
+            
             <Button Style="{StaticResource FlatButton}" Content="—"
                     ToolTip="{DynamicResource Tip_Minimize}"
                     Click="MinimizeToTray_Click"/>
+
             <Button Style="{StaticResource FlatButton}" Content="✖"
                     ToolTip="{DynamicResource Tip_Close}"
                     Click="Close_Click"/>

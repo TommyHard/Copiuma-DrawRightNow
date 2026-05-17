@@ -2,46 +2,52 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:s="clr-namespace:System;assembly=System.Runtime">
 
-    <s:String x:Key="Tip_Pencil">Pencil (P)</s:String>
-    <s:String x:Key="Tip_Brush">Brush (B)</s:String>
-    <s:String x:Key="Tip_Marker">Marker (M)</s:String>
-    <s:String x:Key="Tip_Eraser">Eraser (E)</s:String>
-
-    <s:String x:Key="Tip_Rectangle">Rectangle (R)</s:String>
-    <s:String x:Key="Tip_Ellipse">Ellipse (O)</s:String>
-    <s:String x:Key="Tip_Line">Line (L)</s:String>
-    <s:String x:Key="Tip_Arrow">Arrow (A)</s:String>
-    <s:String x:Key="Tip_Text">Text (T)</s:String>
-
-    <s:String x:Key="Tip_Knife">Knife — delete shape on click (K)</s:String>
-    <s:String x:Key="Tip_Move">Move (V)</s:String>
-    <s:String x:Key="Tip_Eyedropper">Eyedropper — pick color from screen (I)</s:String>
-    <s:String x:Key="Tip_Blur">Blur a screen region (U)</s:String>
-    <s:String x:Key="Tip_LiveBlur">Live mode — keep blurring as content beneath changes</s:String>
+    <s:String x:Key="Tip_Pencil">Pencil</s:String>
+    <s:String x:Key="Tip_Brush">Brush</s:String>
+    <s:String x:Key="Tip_Marker">Marker</s:String>
+    <s:String x:Key="Tip_Eraser">Eraser</s:String>
+    <s:String x:Key="Tip_Rectangle">Rectangle</s:String>
+    <s:String x:Key="Tip_Ellipse">Ellipse</s:String>
+    <s:String x:Key="Tip_Line">Line</s:String>
+    <s:String x:Key="Tip_Arrow">Arrow</s:String>
+    <s:String x:Key="Tip_Text">Text</s:String>
+    <s:String x:Key="Tip_Knife">Knife — delete shape on click</s:String>
+    <s:String x:Key="Tip_Move">Move</s:String>
+    <s:String x:Key="Tip_Eyedropper">Eyedropper — pick color</s:String>
+    <s:String x:Key="Tip_Blur">Blur region</s:String>
+    <s:String x:Key="Tip_LiveBlur">Live mode blur</s:String>
     <s:String x:Key="Tip_BlurSigma">Blur strength (sigma)</s:String>
-
-    <s:String x:Key="Tip_Undo">Undo (Ctrl+Z)</s:String>
-    <s:String x:Key="Tip_Redo">Redo (Ctrl+Y)</s:String>
+    <s:String x:Key="Tip_Undo">Undo</s:String>
+    <s:String x:Key="Tip_Redo">Redo</s:String>
     <s:String x:Key="Tip_Clear">Clear canvas</s:String>
     <s:String x:Key="Tip_Save">Save as PNG/JPG</s:String>
-    <s:String x:Key="Tip_Copy">Copy to clipboard (Win+Shift+C)</s:String>
+    <s:String x:Key="Tip_Copy">Copy to clipboard</s:String>
     <s:String x:Key="Tip_StrokeWidth">Stroke width</s:String>
-    <s:String x:Key="Tip_Fill">Fill shapes (semi-transparent, current color)</s:String>
-
-    <s:String x:Key="Tip_ColorRed">Red</s:String>
-    <s:String x:Key="Tip_ColorGreen">Green</s:String>
-    <s:String x:Key="Tip_ColorBlue">Blue</s:String>
-    <s:String x:Key="Tip_ColorYellow">Yellow</s:String>
-    <s:String x:Key="Tip_ColorBlack">Black</s:String>
-    <s:String x:Key="Tip_ColorWhite">White</s:String>
-
+    <s:String x:Key="Tip_Fill">Fill shapes</s:String>
     <s:String x:Key="Tip_Pin">Pin toolbar</s:String>
     <s:String x:Key="Tip_ToolbarTranslucent">Translucent toolbar</s:String>
     <s:String x:Key="Tip_OverlayDim">Highlight drawing area</s:String>
-    <s:String x:Key="Tip_DrawingEnabled">Drawing mode / clicks pass through (F8)</s:String>
+    <s:String x:Key="Tip_DrawingEnabled">Drawing mode / click-through</s:String>
     <s:String x:Key="Tip_Minimize">Minimize to tray</s:String>
-    <s:String x:Key="Tip_Close">Exit DrawRightNow</s:String>
-
+    <s:String x:Key="Tip_Close">Exit</s:String>
     <s:String x:Key="Tip_Language">Toggle language EN/RU</s:String>
 
+    <s:String x:Key="Opt_Title">Settings</s:String>
+    <s:String x:Key="Opt_General">General</s:String>
+    <s:String x:Key="Opt_Panel">Toolbar</s:String>
+    <s:String x:Key="Opt_GlobalHotkeys">Global Hotkeys</s:String>
+    <s:String x:Key="Opt_ToolHotkeys">Tools Hotkeys</s:String>
+
+    <s:String x:Key="Opt_Tray">Show icon in system tray</s:String>
+    <s:String x:Key="Opt_Lang">Language / Язык интерфейса:</s:String>
+
+    <s:String x:Key="Opt_PressKey">Press any key...</s:String>
+    <s:String x:Key="Opt_DescGlobal">Work anywhere (Ctrl+Alt+...):</s:String>
+    <s:String x:Key="Opt_DescLocal">Work only when drawing:</s:String>
+
+    <s:String x:Key="Opt_ActOverlay">Show/Hide UI</s:String>
+    <s:String x:Key="Opt_ActDraw">Toggle Draw Mode</s:String>
+    <s:String x:Key="Opt_ActUndo">Undo</s:String>
+    <s:String x:Key="Opt_ActRedo">Redo</s:String>
+    <s:String x:Key="Opt_ActCopy">Copy</s:String>
 </ResourceDictionary>

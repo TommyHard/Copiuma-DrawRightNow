@@ -29,6 +29,39 @@ public sealed class ShapeTool : ITool
 
     public ToolType Type { get; }
 
+    private PointF ApplyConstraint(PointF p)
+    {
+        if (_current is null) return p;
+        var start = _current.Start;
+        var dx = p.X - start.X;
+        var dy = p.Y - start.Y;
+
+        if (Type is ToolType.Rectangle or ToolType.Ellipse)
+        {
+            var max = MathF.Max(MathF.Abs(dx), MathF.Abs(dy));
+            float signX = dx >= 0 ? 1f : -1f;
+            float signY = dy >= 0 ? 1f : -1f;
+            return new PointF(start.X + signX * max, start.Y + signY * max);
+        }
+        else if (Type is ToolType.Line or ToolType.Arrow)
+        {
+            var absDx = MathF.Abs(dx);
+            var absDy = MathF.Abs(dy);
+            if (absDx > absDy * 2f)
+                return new PointF(p.X, start.Y);
+            else if (absDy > absDx * 2f)
+                return new PointF(start.X, p.Y);
+            else
+            {
+                var max = MathF.Max(absDx, absDy);
+                float signX = dx >= 0 ? 1f : -1f;
+                float signY = dy >= 0 ? 1f : -1f;
+                return new PointF(start.X + signX * max, start.Y + signY * max);
+            }
+        }
+        return p;
+    }
+
     public IShape? OnPointerDown(PointF p, ToolSettings settings)
     {
         ShapeStyle style;
@@ -45,12 +78,16 @@ public sealed class ShapeTool : ITool
         return _current;
     }
 
-    public void OnPointerMove(PointF p) => _current?.SetEnd(p);
+    public void OnPointerMove(PointF p, bool constrain = false)
+    {
+        if (_current is null) return;
+        _current.SetEnd(constrain ? ApplyConstraint(p) : p);
+    }
 
-    public IShape? OnPointerUp(PointF p)
+    public IShape? OnPointerUp(PointF p, bool constrain = false)
     {
         if (_current is null) return null;
-        _current.SetEnd(p);
+        _current.SetEnd(constrain ? ApplyConstraint(p) : p);
         var b = _current.Bounds;
         if (b.Width < 1f && b.Height < 1f)
         {
