@@ -1,5 +1,4 @@
-﻿using System;
-using DrawRightNow.Core.Models.Shapes;
+﻿using DrawRightNow.Core.Models.Shapes;
 
 namespace DrawRightNow.Core.Models.Tools;
 

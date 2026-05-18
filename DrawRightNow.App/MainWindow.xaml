@@ -17,47 +17,50 @@
     <Grid x:Name="RootGrid"
           Background="Transparent">
 
-        <!-- Полупрозрачная подложка: «вижу, где могу рисовать».
-             Не перехватывает клики; видна только при OverlayDimEnabled -->
+        <!-- Чёрная подложка с регулируемой прозрачностью.
+             Opacity управляется слайдером OverlayDimAlpha (0-100 -> 0-1) -->
         <Border x:Name="DimLayer"
-                Background="#33000000"
                 IsHitTestVisible="False"
-                Visibility="Collapsed"/>
+                Background="Black"
+                Opacity="{Binding OverlayDimOpacity, Mode=OneWay}"/>
 
         <!-- Холст рисования на весь экран. IsHitTestVisible держим всегда True:
              click-through контролируется на уровне Win32 (WM_NCHITTEST) -->
         <render:DrawingSurface x:Name="Surface"
                                ViewModel="{Binding}"/>
 
-        <!-- Горизонтальная плавающая панель сверху -->
+        <!-- Горизонтальная панель снизу -->
         <Grid x:Name="ToolbarHost"
-              VerticalAlignment="Top"
+              VerticalAlignment="Bottom"
               HorizontalAlignment="Center"
-              Margin="0,12,0,0">
+              Margin="0 0 0 16"
+              Background="Transparent"
+              MouseLeftButtonDown="ToolbarHost_MouseDown" 
+              MouseMove="ToolbarHost_MouseMove" 
+              MouseLeftButtonUp="ToolbarHost_MouseUp">
+
+            <Grid.RenderTransform>
+                <TranslateTransform x:Name="ToolbarTransform"/>
+            </Grid.RenderTransform>
+
             <views:ToolbarView x:Name="Toolbar" DataContext="{Binding}"/>
         </Grid>
 
-        <!-- Угловой бейдж — гарантия того, что overlay вообще видим, даже
-             если пользователь ещё ничего не нарисовал. Не блокирует ввод -->
+        <!-- Угловой бейдж — гарантия того, что overlay видим, даже
+             если пользователь ещё ничего не нарисовал -->
         <Border x:Name="ActiveBadge"
                 HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                Margin="0,0,16,16"
-                Padding="10,4"
-                CornerRadius="10"
+                Margin="0 0 16 16"
+                Padding="10 4"
+                CornerRadius="2"
                 Background="#AA1E1E22"
                 BorderBrush="#FF3498DB"
                 BorderThickness="1"
                 IsHitTestVisible="False">
-            <TextBlock Text="DrawRightNow ●" Foreground="#FFEFEFEF" FontSize="11"/>
+            <TextBlock Text="DrawRightNow ●" 
+                       Foreground="#FFEFEFEF" 
+                       FontSize="11"/>
         </Border>
-
-        <!-- Полоса-ловушка для всплытия панели у верхней кромки -->
-        <Border x:Name="HoverStripTop"
-                Height="12"
-                VerticalAlignment="Top"
-                HorizontalAlignment="Stretch"
-                Background="#01000000"
-                MouseEnter="HoverStrip_MouseEnter"/>
 
         <Canvas x:Name="EyedropperOverlay"
                 IsHitTestVisible="False"
@@ -68,12 +71,21 @@
                 <Line X1="0"   Y1="-12" X2="0" Y2="-3" Stroke="White" StrokeThickness="1"/>
                 <Line X1="0"   Y1="3"   X2="0" Y2="12" Stroke="White" StrokeThickness="1"/>
                 <Border x:Name="EyedropperSwatch"
-                        Width="36" Height="36"
+                        Width="55" Height="55"
                         HorizontalAlignment="Left" VerticalAlignment="Top"
-                        Margin="14,14,0,0"
-                        BorderBrush="White" BorderThickness="2"
-                        Background="Transparent"
-                        SnapsToDevicePixels="True"/>
+                        Margin="14 14 0 0"
+                        BorderBrush="White" 
+                        BorderThickness="2"
+                        SnapsToDevicePixels="True">
+                    <Grid>
+                        <UniformGrid x:Name="PixelGrid" 
+                                     Rows="5" Columns="5"/>
+                        <Border BorderBrush="Red" 
+                                BorderThickness="1" 
+                                Width="11" Height="11" 
+                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
             </Grid>
         </Canvas>
 
@@ -89,9 +101,10 @@
                      Background="#33000000"
                      Foreground="White"
                      CaretBrush="White"
-                     Padding="2,0"
+                     Padding="2 0"
                      AcceptsReturn="False"
                      KeyDown="TextEditor_KeyDown"
+                     PreviewMouseWheel="TextEditor_PreviewMouseWheel"
                      LostKeyboardFocus="TextEditor_LostFocus"/>
         </Canvas>
 

@@ -1,19 +1,17 @@
-﻿using System;
+﻿using DrawRightNow.Core.Models;
+using DrawRightNow.Core.ViewModels;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using DrawRightNow.Core.Models;
-using DrawRightNow.Core.ViewModels;
-
 using Color = System.Windows.Media.Color;
-using Point = System.Windows.Point;
-using UserControl = System.Windows.Controls.UserControl;
-using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
+using Point = System.Windows.Point;
 using TextBox = System.Windows.Controls.TextBox;
+using UserControl = System.Windows.Controls.UserControl;
 
 namespace DrawRightNow.App.Views;
 
@@ -24,7 +22,6 @@ public partial class ColorPickerView : UserControl
     private bool _isDraggingAlpha;
     private bool _isUpdatingFromVM;
 
-    // Сохраняем состояние оттенка, чтобы не сбрасывалось при V=0 (чёрный цвет)
     private ColorHsv _currentHsv;
 
     public ColorPickerView()
@@ -63,11 +60,11 @@ public partial class ColorPickerView : UserControl
         if (e.Key == Key.Enter && sender is TextBox tb)
         {
             tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
-            Keyboard.ClearFocus(); // Убираем фокус после применения
+            Keyboard.ClearFocus();
         }
     }
 
-    // --- Отрисовка колеса ---
+    // --- Отрисовка selector'а ---
     private WriteableBitmap GenerateColorWheel(int size)
     {
         var wb = new WriteableBitmap(size, size, 96, 96, PixelFormats.Bgra32, null);
@@ -96,11 +93,11 @@ public partial class ColorPickerView : UserControl
         return wb;
     }
 
-    // --- Логика мыши ---
+    // --- Поведение мыши ---
     private void Control_MouseUp(object sender, MouseButtonEventArgs e)
     {
         _isDraggingWheel = _isDraggingValue = _isDraggingAlpha = false;
-        Mouse.Capture(null); // Глобально снимаем залипание мыши (решает проблему №2)
+        Mouse.Capture(null);
     }
 
     private void Wheel_MouseDown(object sender, MouseButtonEventArgs e)
@@ -157,13 +154,13 @@ public partial class ColorPickerView : UserControl
     {
         if (DataContext is not MainViewModel vm) return;
         _isUpdatingFromVM = true;
-        _currentHsv = hsv; // Запоминаем текущий оттенок
+        _currentHsv = hsv;
         vm.StrokeColor = hsv.ToRgba();
         _isUpdatingFromVM = false;
         UpdateUIElements(hsv, vm.StrokeColor);
     }
 
-    // --- Внешнее обновление (например, вбили текст) ---
+    // --- Внешнее обновление (Изменили текст, etc.) ---
     private void UpdateUIFromViewModel()
     {
         if (_isUpdatingFromVM || DataContext is not MainViewModel vm) return;
@@ -171,7 +168,6 @@ public partial class ColorPickerView : UserControl
         var color = vm.StrokeColor;
         var newHsv = ColorHsv.FromRgba(color);
 
-        // Предотвращаем потерю цвета при выборе чёрного или белого
         if (newHsv.S == 0 && _currentHsv.S > 0) newHsv = new ColorHsv(_currentHsv.H, newHsv.S, newHsv.V, newHsv.A);
         if (newHsv.V == 0 && _currentHsv.V > 0) newHsv = new ColorHsv(_currentHsv.H, _currentHsv.S, newHsv.V, newHsv.A);
 

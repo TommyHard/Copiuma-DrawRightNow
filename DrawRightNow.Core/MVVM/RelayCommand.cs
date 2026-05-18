@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows.Input;
+﻿using System.Windows.Input;
 
 namespace DrawRightNow.Core.Mvvm;
 
@@ -18,9 +17,7 @@ public sealed class RelayCommand : ICommand
     }
 
     public RelayCommand(Action execute, Func<bool>? canExecute = null)
-        : this(_ => execute(), canExecute is null ? null : _ => canExecute())
-    {
-    }
+        : this(_ => execute(), canExecute is null ? null : _ => canExecute()) { }
 
     public event EventHandler? CanExecuteChanged;
 

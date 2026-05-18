@@ -1,17 +1,13 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using DrawRightNow.Core.ViewModels;
-using DrawRightNow.Core.Models;
+﻿using DrawRightNow.App.Services;
 using DrawRightNow.Core.Models.Tools;
-using DrawRightNow.App.Services;
-
-using Window = System.Windows.Window;
+using DrawRightNow.Core.ViewModels;
+using System.Windows;
+using System.Windows.Input;
+using Application = System.Windows.Application;
 using Button = System.Windows.Controls.Button;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using KeyEventHandler = System.Windows.Input.KeyEventHandler;
-using Application = System.Windows.Application;
+using Window = System.Windows.Window;
 
 namespace DrawRightNow.App.Views;
 
@@ -50,14 +46,11 @@ public partial class OptionsView : Window
         var h = vm.Settings.Hotkeys;
         var t = vm.Settings.ToolHotkeys;
 
-        // Глобальные
+        // Global
         Btn_Over.Content = h["ToggleOverlay"].DisplayText;
-        Btn_Draw.Content = h["ToggleDrawing"].DisplayText;
         Btn_Undo.Content = h["Undo"].DisplayText;
         Btn_Redo.Content = h["Redo"].DisplayText;
-        Btn_Copy.Content = h["Copy"].DisplayText;
 
-        // Локальные инструменты (теперь обращаемся по строке)
         Btn_T_Pencil.Content = t["Pencil"];
         Btn_T_Brush.Content = t["Brush"];
         Btn_T_Marker.Content = t["Marker"];
@@ -73,7 +66,7 @@ public partial class OptionsView : Window
         Btn_T_Eye.Content = t["Eyedropper"];
     }
 
-    // --- Глобальные Хоткеи ---
+    // --- Global Hotkey's ---
     private void GlobalHotkey_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.Tag is string actionName)
@@ -115,11 +108,10 @@ public partial class OptionsView : Window
         _activeGlobalAction = null;
         RefreshHotkeyLabels();
 
-        // ФИКС: обращаемся к Owner (MainWindow)
         if (this.Owner is MainWindow mw) mw.UpdateGlobalHotkeys();
     }
 
-    // --- Локальные Хоткеи Инструментов ---
+    // --- Local HotKey's Инструментов ---
     private void ToolHotkey_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && Enum.TryParse<ToolType>(btn.Tag.ToString(), out var toolType))
@@ -149,7 +141,6 @@ public partial class OptionsView : Window
 
         if (_activeToolAction == null || DataContext is not MainViewModel vm) return;
 
-        // 1. Формируем строку комбинации вместе с модификаторами (Ctrl, Alt, Shift)
         var modifiers = Keyboard.Modifiers;
         string display = "";
 
@@ -159,15 +150,12 @@ public partial class OptionsView : Window
 
         display += key.ToString();
 
-        // 2. Пересоздаем словарь, чтобы разорвать ссылочную идентичность. 
-        // Это заставит WPF гарантированно обновить биндинги ToolTip.
         var updatedHotkeys = new System.Collections.Generic.Dictionary<string, string>(vm.Settings.ToolHotkeys);
         updatedHotkeys[_activeToolAction.Value.ToString()] = display;
 
         vm.Settings.ToolHotkeys = updatedHotkeys;
         vm.Settings.Save();
 
-        // 3. Уведомляем интерфейс
         vm.NotifySettingsChanged();
 
         _activeToolAction = null;
@@ -177,14 +165,18 @@ public partial class OptionsView : Window
     private void SetButtonToListenState(Button btn)
     {
         if (Application.Current.Resources["Opt_PressKey"] is string str)
+        {
             btn.Content = str;
+        }
         else
+        {
             btn.Content = "???";
+        }
     }
 
     private void RegisterKeyCapture(KeyEventHandler handler)
     {
-        if (Window.GetWindow(this) is Window window) window.PreviewKeyDown += handler; // ИСПОЛЬЗУЕМ PreviewKeyDown
+        if (Window.GetWindow(this) is Window window) window.PreviewKeyDown += handler;
     }
 
     private void UnregisterKeyCapture(object sender, KeyEventHandler handler)

@@ -1,11 +1,7 @@
-﻿using System;
-
-namespace DrawRightNow.Interop;
+﻿namespace DrawRightNow.Interop;
 
 /// <summary>
-/// Низкоуровневые операции захвата экрана через GDI. Эта обёртка
-/// платформо-зависима (Windows), но не зависит от WPF — поэтому живёт
-/// в Interop. App-слой добавляет к ним временное скрытие overlay-окна
+/// Низкоуровневые операции захвата экрана через GDI
 /// </summary>
 public static class ScreenCapture
 {
@@ -19,7 +15,6 @@ public static class ScreenCapture
         try
         {
             var bgr = NativeMethods.GetPixel(dc, x, y);
-            // GetPixel: 0x00BBGGRR
             var r = (byte)(bgr & 0xFF);
             var g = (byte)((bgr >> 8) & 0xFF);
             var b = (byte)((bgr >> 16) & 0xFF);

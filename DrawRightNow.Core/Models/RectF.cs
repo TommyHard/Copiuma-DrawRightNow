@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DrawRightNow.Core.Models;
+﻿namespace DrawRightNow.Core.Models;
 
 /// <summary>
 /// Bounding box. Используется для Hit-Testing и Dirty Rectangles

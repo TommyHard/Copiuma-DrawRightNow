@@ -1,7 +1,4 @@
-﻿using System;
-using System.Globalization;
-using System.Linq;
-using System.Threading;
+﻿using System.Globalization;
 using System.Windows;
 using Application = System.Windows.Application;
 

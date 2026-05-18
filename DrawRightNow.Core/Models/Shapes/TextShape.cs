@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DrawRightNow.Core.Models.Shapes;
+﻿namespace DrawRightNow.Core.Models.Shapes;
 
 /// <summary>
 /// Текстовая фигура. Text и Position мутируемые — для инлайн-редактирования
@@ -22,7 +20,12 @@ public sealed class TextShape : IShape
     public Guid Id { get; }
     public PointF Position { get; private set; }
     public ColorRgba Color { get; }
-    public float FontSize { get; }
+
+    /// <summary>
+    /// Размер шрифта. Может меняться при инлайн-редактировании
+    /// (Ctrl+Wheel в редакторе)
+    /// </summary>
+    public float FontSize { get; set; }
 
     public string Text
     {

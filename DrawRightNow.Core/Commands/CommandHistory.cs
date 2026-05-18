@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace DrawRightNow.Core.Commands;
+﻿namespace DrawRightNow.Core.Commands;
 
 /// <summary>
 /// Стек действий для Undo/Redo. Очищает Redo при появлении нового действия,

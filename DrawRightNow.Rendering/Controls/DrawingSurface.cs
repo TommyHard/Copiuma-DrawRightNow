@@ -1,11 +1,11 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Input;
-using DrawRightNow.Core.Models;
+﻿using DrawRightNow.Core.Models;
+using DrawRightNow.Core.Models.Tools;
 using DrawRightNow.Core.ViewModels;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 using SkiaSharp.Views.WPF;
+using System.Windows;
+using System.Windows.Input;
 
 namespace DrawRightNow.Rendering.Controls;
 
@@ -23,6 +23,26 @@ public class DrawingSurface : SKElement
             new PropertyMetadata(null, OnViewModelChanged));
 
     private readonly SkiaShapeRenderer _renderer = new();
+
+    // ---- Ctrl+LMB изменение размера кисти ----
+    private bool _adjustingBrush;
+    private System.Windows.Point _brushAdjustStart;   // позиция начала жеста (в координатах Surface)
+    private float _brushStartWidth;                   // StrokeWidth при начале жеста
+    private float _brushPreviewWidth;                 // текущая "превью" ширина
+
+    private PointF _hoverPosition;
+    private bool _isMouseInside;
+
+    /// <summary>
+    /// Минимальная и максимальная ширина кисти при подгонке
+    /// </summary>
+    private const float BrushMin = 1f;
+    private const float BrushMax = 64f;
+
+    /// <summary>
+    /// Сколько пикселей сдвига даёт +1 к ширине кисти. Меньше = чувствительнее
+    /// </summary>
+    private const float BrushAdjustPixelsPerUnit = 2f;
 
     public DrawingSurface()
     {
@@ -45,45 +65,40 @@ public class DrawingSurface : SKElement
         if (e.OldValue is MainViewModel old)
         {
             old.Canvas.Changed -= self.OnCanvasChanged;
-            old.PropertyChanged -= self.OnVmPropertyChanged;
-            self.UnsubscribeFromFrameProvider(old.FrameProvider);
+            old.PropertyChanged -= self.OnViewModelPropertyChanged;
         }
 
         if (e.NewValue is MainViewModel @new)
         {
             @new.Canvas.Changed += self.OnCanvasChanged;
-            @new.PropertyChanged += self.OnVmPropertyChanged;
-            self.SubscribeToFrameProvider(@new.FrameProvider);
+            @new.PropertyChanged += self.OnViewModelPropertyChanged;
         }
     }
 
-    private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(MainViewModel.FrameProvider)) return;
-        SubscribeToFrameProvider(ViewModel?.FrameProvider);
-    }
-
-    private DrawRightNow.Core.Services.IFrameProvider? _subscribedProvider;
-    private void SubscribeToFrameProvider(DrawRightNow.Core.Services.IFrameProvider? p)
-    {
-        if (ReferenceEquals(_subscribedProvider, p)) return;
-        UnsubscribeFromFrameProvider(_subscribedProvider);
-        _subscribedProvider = p;
-        if (p is not null) p.FrameUpdated += OnFrameUpdated;
-    }
-    private void UnsubscribeFromFrameProvider(DrawRightNow.Core.Services.IFrameProvider? p)
-    {
-        if (p is null) return;
-        p.FrameUpdated -= OnFrameUpdated;
-        if (ReferenceEquals(_subscribedProvider, p)) _subscribedProvider = null;
-    }
-
-    private void OnFrameUpdated()
-    {
-        Dispatcher.BeginInvoke(InvalidateVisual, System.Windows.Threading.DispatcherPriority.Render);
+        if (e.PropertyName == nameof(MainViewModel.ActiveTool) ||
+            e.PropertyName == nameof(MainViewModel.StrokeWidth))
+        {
+            InvalidateVisual();
+        }
     }
 
     private void OnCanvasChanged(object? sender, EventArgs e) => InvalidateVisual();
+
+    protected override void OnMouseEnter(MouseEventArgs e)
+    {
+        base.OnMouseEnter(e);
+        _isMouseInside = true;
+        if (ViewModel?.ActiveTool == ToolType.Eraser) InvalidateVisual();
+    }
+
+    protected override void OnMouseLeave(MouseEventArgs e)
+    {
+        base.OnMouseLeave(e);
+        _isMouseInside = false;
+        if (ViewModel?.ActiveTool == ToolType.Eraser) InvalidateVisual();
+    }
 
     protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
@@ -98,6 +113,57 @@ public class DrawingSurface : SKElement
 
         if (vm.Canvas.Pending is { } pending)
             _renderer.Draw(canvas, pending);
+
+        if (_adjustingBrush)
+        {
+            using var fill = new SKPaint
+            {
+                Color = new SKColor(0x34, 0x98, 0xDB, 0x40),
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill
+            };
+            using var stroke = new SKPaint
+            {
+                Color = new SKColor(0xFF, 0xFF, 0xFF, 0xE0),
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 1.5f
+            };
+            float r = _brushPreviewWidth * 0.5f;
+            canvas.DrawCircle((float)_brushAdjustStart.X, (float)_brushAdjustStart.Y, r, fill);
+            canvas.DrawCircle((float)_brushAdjustStart.X, (float)_brushAdjustStart.Y, r, stroke);
+
+            using var font = new SKFont(SKTypeface.Default, 13f) { Edging = SKFontEdging.SubpixelAntialias };
+            using var textPaint = new SKPaint(font)
+            {
+                Color = SKColors.White,
+                IsAntialias = true
+            };
+            var label = $"{_brushPreviewWidth:0.#} px";
+            canvas.DrawText(label, (float)_brushAdjustStart.X + r + 8, (float)_brushAdjustStart.Y + 4, textPaint);
+        }
+        else if (vm.ActiveTool == ToolType.Eraser && _isMouseInside)
+        {
+            // Отрисовка превью зоны Eraze
+            using var fill = new SKPaint
+            {
+                Color = new SKColor(255, 100, 100, 30),
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill
+            };
+            using var stroke = new SKPaint
+            {
+                Color = new SKColor(255, 255, 255, 200),
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 1f
+            };
+
+            float r = vm.StrokeWidth * 0.5f;
+
+            canvas.DrawCircle(_hoverPosition.X, _hoverPosition.Y, r, fill);
+            canvas.DrawCircle(_hoverPosition.X, _hoverPosition.Y, r, stroke);
+        }
     }
 
     // ---- Mouse input ----
@@ -108,8 +174,35 @@ public class DrawingSurface : SKElement
         if (e.ChangedButton != MouseButton.Left) return;
         var vm = ViewModel; if (vm is null) return;
 
-        CaptureMouse();
         var local = e.GetPosition(this);
+
+        // Двойной клик инструментом Text по существующей TextShape -> редактирование
+        if (e.ClickCount >= 1 && vm.ActiveTool == ToolType.Text)
+        {
+            var hit = vm.HitTestTextAt(ToCanvas(local), tolerance: 6f);
+            if (hit is not null)
+            {
+                vm.BeginEditExisting(hit);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Ctrl+ЛКМ -> подгонка размера кисти. Сохраняем стартовую
+        // ширину и точку якоря, перехватываем мышь, перерисовываем превью
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        {
+            _adjustingBrush = true;
+            _brushAdjustStart = local;
+            _brushStartWidth = vm.StrokeWidth;
+            _brushPreviewWidth = vm.StrokeWidth;
+            CaptureMouse();
+            InvalidateVisual();
+            e.Handled = true;
+            return;
+        }
+
+        CaptureMouse();
         var screen = PointToScreen(local);
         vm.OnInputDown(ToCanvas(local), ToCanvas(screen));
         e.Handled = true;
@@ -118,10 +211,33 @@ public class DrawingSurface : SKElement
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
-        if (e.LeftButton != MouseButtonState.Pressed) return;
         var vm = ViewModel; if (vm is null) return;
 
         var local = e.GetPosition(this);
+        _hoverPosition = ToCanvas(local);
+
+        if (_adjustingBrush)
+        {
+            var p = e.GetPosition(this);
+            var dx = (float)(p.X - _brushAdjustStart.X);
+            var newWidth = _brushStartWidth + dx / BrushAdjustPixelsPerUnit;
+            if (newWidth < BrushMin) newWidth = BrushMin;
+            if (newWidth > BrushMax) newWidth = BrushMax;
+            _brushPreviewWidth = newWidth;
+            vm.StrokeWidth = newWidth;
+            InvalidateVisual();
+            return;
+        }
+
+        if (e.LeftButton != MouseButtonState.Pressed)
+        {
+            if (vm.ActiveTool == ToolType.Eraser)
+            {
+                InvalidateVisual();
+            }
+            return;
+        }
+
         var screen = PointToScreen(local);
         bool constrain = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
         vm.OnInputMove(ToCanvas(local), ToCanvas(screen), constrain);
@@ -132,6 +248,16 @@ public class DrawingSurface : SKElement
         base.OnMouseUp(e);
         if (e.ChangedButton != MouseButton.Left) return;
         var vm = ViewModel; if (vm is null) return;
+
+        // Завершаем режим подгонки кисти — отпускаем capture и убираем preview
+        if (_adjustingBrush)
+        {
+            _adjustingBrush = false;
+            if (IsMouseCaptured) ReleaseMouseCapture();
+            InvalidateVisual();
+            e.Handled = true;
+            return;
+        }
 
         var local = e.GetPosition(this);
         var screen = PointToScreen(local);

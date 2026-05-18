@@ -1,10 +1,9 @@
-﻿using System;
-using DrawRightNow.Core.Models.Shapes;
+﻿using DrawRightNow.Core.Models.Shapes;
 
 namespace DrawRightNow.Core.Models.Tools;
 
 /// <summary>
-/// Универсальный инструмент-"2 точки": Rectangle / Ellipse / Line / Arrow.
+/// Универсальный инструмент "2 точки": Rectangle / Ellipse / Line / Arrow.
 /// Поддерживает заливку через ToolSettings.FillEnabled — цвет заливки
 /// берётся как тот же Color с уменьшенной альфой (FillAlpha)
 /// </summary>

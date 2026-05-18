@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using DrawRightNow.Core.Models.Shapes;
 
 namespace DrawRightNow.Core.Models;
 
 /// <summary>
 /// Модель холста: упорядоченный список фигур + текущая "черновая" фигура,
-/// над которой пользователь сейчас работает. ObservableCollection нужна
-/// только для статичных подписчиков (например, side panel). Внутри горячего
-/// цикла рендера читаем напрямую из списка
+/// над которой пользователь сейчас работает
 /// </summary>
 public sealed class CanvasModel
 {

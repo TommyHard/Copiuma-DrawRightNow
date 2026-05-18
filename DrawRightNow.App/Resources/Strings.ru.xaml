@@ -11,45 +11,53 @@
     <s:String x:Key="Tip_Line">Линия</s:String>
     <s:String x:Key="Tip_Arrow">Стрелка</s:String>
     <s:String x:Key="Tip_Text">Текст</s:String>
-    <s:String x:Key="Tip_Knife">Нож — удалить фигуру по клику</s:String>
+    <s:String x:Key="Tip_Knife">Нож — удалить фигуру</s:String>
     <s:String x:Key="Tip_Move">Переместить</s:String>
     <s:String x:Key="Tip_Eyedropper">Пипетка — взять цвет с экрана</s:String>
     <s:String x:Key="Tip_Blur">Размытие региона экрана</s:String>
-    <s:String x:Key="Tip_LiveBlur">Live-режим — следить за подложкой в реальном времени</s:String>
-    <s:String x:Key="Tip_BlurSigma">Сила размытия (sigma)</s:String>
 
     <s:String x:Key="Tip_Undo">Отменить</s:String>
     <s:String x:Key="Tip_Redo">Повторить</s:String>
     <s:String x:Key="Tip_Clear">Очистить холст</s:String>
     <s:String x:Key="Tip_Save">Сохранить как PNG/JPG</s:String>
     <s:String x:Key="Tip_Copy">Копировать в буфер</s:String>
-    
+
     <s:String x:Key="Tip_StrokeWidth">Толщина линии</s:String>
+    <s:String x:Key="Tip_ColorPalette">Палитра</s:String>
     <s:String x:Key="Tip_Fill">Заливка фигур</s:String>
-    <s:String x:Key="Tip_Pin">Закрепить панель</s:String>
+    <s:String x:Key="Tip_Lock">Запретить перемещение панели</s:String>
+    <s:String x:Key="Tip_Vertical">Вертикальная ориентация панели</s:String>
+    <s:String x:Key="Tip_Monitor">Выбрать монитор для overlay и панели</s:String>
+    <s:String x:Key="Mon_All">Все мониторы</s:String>
+    <s:String x:Key="Mon_Display">Монитор</s:String>
+    <s:String x:Key="Mon_Primary">Основной</s:String>
     <s:String x:Key="Tip_ToolbarTranslucent">Полупрозрачная панель</s:String>
     <s:String x:Key="Tip_OverlayDim">Подсветить зону рисования</s:String>
     <s:String x:Key="Tip_DrawingEnabled">Режим рисования / клики сквозь окно</s:String>
     <s:String x:Key="Tip_Minimize">Свернуть в трей</s:String>
     <s:String x:Key="Tip_Close">Выйти</s:String>
+    <s:String x:Key="Tip_CloseWindow">Закрыть</s:String>
     <s:String x:Key="Tip_Language">Переключить язык EN/RU</s:String>
 
+    <s:String x:Key="Cp_Title">Выбор цвета</s:String>
+    
     <s:String x:Key="Opt_Title">Настройки приложения</s:String>
     <s:String x:Key="Opt_General">Общие</s:String>
-    <s:String x:Key="Opt_Panel">Тулбар</s:String>
-    <s:String x:Key="Opt_GlobalHotkeys">Глобальные хоткеи</s:String>
+    <s:String x:Key="Opt_Panel">Панель инструментов</s:String>
+    <s:String x:Key="Opt_GlobalHotkeys">Горячие клавиши</s:String>
     <s:String x:Key="Opt_ToolHotkeys">Инструменты</s:String>
+    <s:String x:Key="Opt_ChangePosition">Изменить позицию панели</s:String>
 
     <s:String x:Key="Opt_Tray">Отображать иконку в системном трее</s:String>
-    <s:String x:Key="Opt_Lang">Язык интерфейса / Language:</s:String>
+    <s:String x:Key="Opt_RememberPosition">Запоминать положение панели после завершения</s:String>
+    <s:String x:Key="Opt_Lang">Язык интерфейса:</s:String>
+    <s:String x:Key="Opt_ToolsVisibility">Переключение видимости инструментов:</s:String>
 
     <s:String x:Key="Opt_PressKey">Нажмите любую клавишу...</s:String>
     <s:String x:Key="Opt_DescGlobal">Действуют в любой программе (Ctrl+Alt+...):</s:String>
     <s:String x:Key="Opt_DescLocal">Работают только при рисовании:</s:String>
 
     <s:String x:Key="Opt_ActOverlay">Показать/Скрыть UI</s:String>
-    <s:String x:Key="Opt_ActDraw">Режим кликов сквозь</s:String>
     <s:String x:Key="Opt_ActUndo">Отмена (Undo)</s:String>
     <s:String x:Key="Opt_ActRedo">Повтор (Redo)</s:String>
-    <s:String x:Key="Opt_ActCopy">Копировать</s:String>
 </ResourceDictionary>

@@ -4,288 +4,394 @@
              xmlns:conv="clr-namespace:DrawRightNow.App.Converters" 
              xmlns:views="clr-namespace:DrawRightNow.App.Views"
              Background="Transparent">
+
     <UserControl.Resources>
         <conv:ToolTypeToBoolConverter x:Key="ToolConv"/>
         <conv:RgbaToMediaColorConverter x:Key="RgbaToMediaColorConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-
-        <Style TargetType="ToolTip" x:Key="DynamicTip">
-            <Setter Property="Background" Value="#F21E1E22"/>
-            <Setter Property="BorderBrush" Value="#FF4A4A5A"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="6,4"/>
-        </Style>
     </UserControl.Resources>
 
-    <Border Style="{StaticResource Toolbar}">
-        <StackPanel Orientation="Horizontal">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="✎" Visibility="{Binding Show_Pencil, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Pencil, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Pencil}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Pencil]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+        <views:SecondaryToolbarView x:Name="SecondaryPanel">
+            <views:SecondaryToolbarView.Style>
+                <Style TargetType="{x:Type views:SecondaryToolbarView}">
+                    <Setter Property="Grid.Row" Value="0"/>
+                    <Setter Property="HorizontalAlignment" Value="Right"/>
+                    <Setter Property="Margin" Value="0 0 0 8"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ToolbarDock}" Value="BottomRight">
+                            <Setter Property="Grid.Row" Value="2"/>
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0 8 0 0"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ToolbarDock}" Value="BottomLeft">
+                            <Setter Property="Grid.Row" Value="2"/>
+                            <Setter Property="HorizontalAlignment" Value="Left"/>
+                            <Setter Property="Margin" Value="0 8 0 0"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ToolbarDock}" Value="TopLeft">
+                            <Setter Property="Grid.Row" Value="0"/>
+                            <Setter Property="HorizontalAlignment" Value="Left"/>
+                            <Setter Property="Margin" Value="0 0 0 8"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ToolbarDock}" Value="TopRight">
+                            <Setter Property="Grid.Row" Value="0"/>
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0 0 0 8"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </views:SecondaryToolbarView.Style>
+        </views:SecondaryToolbarView>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="🖌" Visibility="{Binding Show_Brush, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Brush, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Brush}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Brush]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+        <Border Grid.Row="1" Grid.Column="1" 
+                Style="{StaticResource CoreBorderStyle}">
+            <StackPanel Orientation="Horizontal">
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="▮" Visibility="{Binding Show_Marker, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Marker, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Marker}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Marker]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" 
+                              Content="{StaticResource MoveTool}" 
+                              Visibility="{Binding Show_Move, Converter={StaticResource BoolToVis}}" 
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Move, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Move}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Move]}" 
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="⌫" Visibility="{Binding Show_Eraser, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Eraser, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Eraser}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Eraser]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" 
+                              Content="{StaticResource EraserTool}"
+                              Visibility="{Binding Show_Eraser, Converter={StaticResource BoolToVis}}"
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Eraser, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Eraser}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Eraser]}" 
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" 
+                              Content="{StaticResource EraserAreaTool}" 
+                              Visibility="{Binding Show_KnifeDelete, Converter={StaticResource BoolToVis}}" 
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=KnifeDelete, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Knife}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[KnifeDelete]}" 
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="▭" Visibility="{Binding Show_Rectangle, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Rectangle, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Rectangle}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Rectangle]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <Rectangle Style="{StaticResource ToolbarDivider}"/>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="◯" Visibility="{Binding Show_Ellipse, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Ellipse, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Ellipse}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Ellipse]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" 
+                              Content="{StaticResource PencilTool}" 
+                              Visibility="{Binding Show_Pencil, Converter={StaticResource BoolToVis}}" 
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Pencil, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Pencil}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Pencil]}" 
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="╱" Visibility="{Binding Show_Line, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Line, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Line}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Line]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" 
+                              Content="{StaticResource BrushTool}" 
+                              Visibility="{Binding Show_Brush, Converter={StaticResource BoolToVis}}" 
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Brush, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Brush}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Brush]}" 
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="→" Visibility="{Binding Show_Arrow, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Arrow, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Arrow}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Arrow]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" 
+                              Content="{StaticResource MarkerTool}" 
+                              Visibility="{Binding Show_Marker, Converter={StaticResource BoolToVis}}" 
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Marker, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Marker}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Marker]}" 
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="T" Visibility="{Binding Show_Text, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Text, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Text}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Text]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" 
+                              Content="{StaticResource BlurTool}" 
+                              Visibility="{Binding Show_Blur, Converter={StaticResource BoolToVis}}" 
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Blur, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Blur}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Blur]}"
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
+                <Rectangle Style="{StaticResource ToolbarDivider}"/>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="✂" Visibility="{Binding Show_KnifeDelete, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=KnifeDelete, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Knife}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[KnifeDelete]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" 
+                              Content="{StaticResource RectangleTool}" 
+                              Visibility="{Binding Show_Rectangle, Converter={StaticResource BoolToVis}}" 
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Rectangle, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Rectangle}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Rectangle]}" 
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="✥" Visibility="{Binding Show_Move, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Move, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Move}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Move]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" 
+                              Content="{StaticResource CircleTool}" 
+                              Visibility="{Binding Show_Ellipse, Converter={StaticResource BoolToVis}}" 
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Ellipse, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Ellipse}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Ellipse]}" 
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="💧" Visibility="{Binding Show_Eyedropper, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Eyedropper, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Eyedropper}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Eyedropper]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}"
+                              Content="{StaticResource LineTool}"
+                              Visibility="{Binding Show_Line, Converter={StaticResource BoolToVis}}"
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Line, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Line}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Line]}"
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="◐" Visibility="{Binding Show_Blur, Converter={StaticResource BoolToVis}}" IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Blur, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Blur}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.ToolHotkeys[Blur]}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}"
+                              Content="{StaticResource ArrowTool}"
+                              Visibility="{Binding Show_Arrow, Converter={StaticResource BoolToVis}}"
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Arrow, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Arrow}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Arrow]}"
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="◌" ToolTip="{DynamicResource Tip_LiveBlur}" IsChecked="{Binding LiveBlurEnabled, Mode=TwoWay}"/>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}"
+                              Content="{StaticResource TextTool}"
+                              Visibility="{Binding Show_Text, Converter={StaticResource BoolToVis}}"
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Text, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Text}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Text]}"
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <Slider Width="70" Margin="6,0" VerticalAlignment="Center" Minimum="2" Maximum="64" ToolTip="{DynamicResource Tip_BlurSigma}" Value="{Binding BlurSigma, Mode=TwoWay}" Style="{StaticResource FlatSlider}"/>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" 
+                              Content="{StaticResource FillTool}" 
+                              ToolTip="{DynamicResource Tip_Fill}"
+                              Visibility="{Binding Show_AreaFill, Converter={StaticResource BoolToVis}}"
+                              IsChecked="{Binding FillEnabled, Mode=TwoWay}"/>
 
-            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
+                <Rectangle Style="{StaticResource ToolbarDivider}"/>
 
-            <Button Style="{StaticResource FlatButton}" Content="↶" Command="{Binding UndoCommand}">
-                <Button.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Undo}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.Hotkeys[Undo].DisplayText}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </Button.ToolTip>
-            </Button>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" 
+                              Content="{StaticResource EyedropperTool}" 
+                              Visibility="{Binding Show_Eyedropper, Converter={StaticResource BoolToVis}}" 
+                              IsChecked="{Binding ActiveTool, Converter={StaticResource ToolConv}, ConverterParameter=Eyedropper, Mode=TwoWay}">
+                    <ToggleButton.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Eyedropper}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.ToolHotkeys[Eyedropper]}"
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </ToggleButton.ToolTip>
+                </ToggleButton>
 
-            <Button Style="{StaticResource FlatButton}" Content="↷" Command="{Binding RedoCommand}">
-                <Button.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Redo}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.Hotkeys[Redo].DisplayText}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </Button.ToolTip>
-            </Button>
+                <Grid Margin="2">
+                    <ToggleButton x:Name="ColorPickerButton"
+                                  Style="{StaticResource IconToggleButtonStyle}"
+                                  ToolTip="{DynamicResource Tip_ColorPalette}"
+                                  IsChecked="{Binding IsColorPickerOpen, Mode=TwoWay}"/>
 
-            <Button Style="{StaticResource FlatButton}" Content="✕" ToolTip="{DynamicResource Tip_Clear}" Command="{Binding ClearCommand}"/>
-            <Button Style="{StaticResource FlatButton}" Content="💾" ToolTip="{DynamicResource Tip_Save}" Click="Save_Click"/>
+                    <Border Margin="6"
+                            CornerRadius="2"
+                            IsHitTestVisible="False"
+                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Border.Background>
+                            <SolidColorBrush Color="{Binding StrokeColor, Converter={StaticResource RgbaToMediaColorConverter}}"/>
+                        </Border.Background>
+                    </Border>
+                </Grid>
 
-            <Button Style="{StaticResource FlatButton}" Content="📋" Click="Copy_Click">
-                <Button.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_Copy}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.Hotkeys[Copy].DisplayText}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </Button.ToolTip>
-            </Button>
+                <Popup x:Name="ColorPickerPopup"
+                       IsOpen="{Binding IsColorPickerOpen}"
+                       PlacementTarget="{Binding ElementName=ColorPickerButton}"
+                       Placement="Bottom"
+                       VerticalOffset="12"
+                       AllowsTransparency="True"
+                       PopupAnimation="Fade"
+                       StaysOpen="False">
+                    <views:ColorPickerView DataContext="{Binding}"/>
+                </Popup>
 
-            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
+                <Rectangle Style="{StaticResource ToolbarDivider}"/>
 
-            <Slider x:Name="WidthSlider" Width="80" Margin="6,0" VerticalAlignment="Center" Minimum="1" Maximum="24" ToolTip="{DynamicResource Tip_StrokeWidth}" Value="{Binding StrokeWidth, Mode=TwoWay}" Style="{StaticResource FlatSlider}"/>
-            <ToggleButton Style="{StaticResource ToolButton}" Content="█" ToolTip="{DynamicResource Tip_Fill}" IsChecked="{Binding FillEnabled, Mode=TwoWay}"/>
+                <Slider x:Name="WidthSlider"
+                        Width="80"
+                        Margin="0 0 2 0"
+                        VerticalAlignment="Center"
+                        Minimum="1"
+                        Maximum="24"
+                        ToolTip="{DynamicResource Tip_StrokeWidth}"
+                        Value="{Binding StrokeWidth, Mode=TwoWay}"
+                        Visibility="{Binding Show_WidthSlider, Converter={StaticResource BoolToVis}}"
+                        Style="{StaticResource BlueAccentSliderStyle}"/>
 
-            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
+                <Rectangle Style="{StaticResource ToolbarDivider}"
+                           Visibility="{Binding Show_WidthSlider, Converter={StaticResource BoolToVis}}"/>
 
-            <ToggleButton x:Name="ColorPickerButton" Style="{StaticResource ToolButton}" Width="34" Height="34" IsChecked="{Binding IsColorPickerOpen, Mode=TwoWay}">
-                <ToggleButton.Background>
-                    <SolidColorBrush Color="{Binding StrokeColor, Converter={StaticResource RgbaToMediaColorConverter}}"/>
-                </ToggleButton.Background>
-            </ToggleButton>
+                <Button Style="{StaticResource IconControlButtonStyle}"
+                        Content="{StaticResource UndoTool}"
+                        Command="{Binding UndoCommand}">
+                    <Button.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Undo}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.Hotkeys[Undo].DisplayText}"
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </Button.ToolTip>
+                </Button>
 
-            <Popup x:Name="ColorPickerPopup" IsOpen="{Binding IsColorPickerOpen}" PlacementTarget="{Binding ElementName=ColorPickerButton}" Placement="Bottom" VerticalOffset="12" AllowsTransparency="True" PopupAnimation="Fade" StaysOpen="False">
-                <views:ColorPickerView DataContext="{Binding}"/>
-            </Popup>
+                <Button Style="{StaticResource IconControlButtonStyle}" 
+                        Content="{StaticResource RedoTool}"
+                        Command="{Binding RedoCommand}">
+                    <Button.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Redo}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.Hotkeys[Redo].DisplayText}"
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </Button.ToolTip>
+                </Button>
 
-            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
+                <Button Style="{StaticResource IconControlButtonStyle}"
+                        Content="{StaticResource ClearTool}"
+                        ToolTip="{DynamicResource Tip_Clear}"
+                        Visibility="{Binding Show_ClearTool, Converter={StaticResource BoolToVis}}"
+                        Command="{Binding ClearCommand}"/>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="📌" ToolTip="{DynamicResource Tip_Pin}" IsChecked="{Binding IsToolbarPinned, Mode=TwoWay}"/>
-            <ToggleButton Style="{StaticResource ToolButton}" Content="◍" ToolTip="{DynamicResource Tip_ToolbarTranslucent}" IsChecked="{Binding ToolbarTranslucent, Mode=TwoWay}"/>
-            <ToggleButton Style="{StaticResource ToolButton}" Content="▒" ToolTip="{DynamicResource Tip_OverlayDim}" IsChecked="{Binding OverlayDimEnabled, Mode=TwoWay}"/>
+                <Button Style="{StaticResource IconControlButtonStyle}"
+                        Content="{StaticResource SaveTool}"
+                        ToolTip="{DynamicResource Tip_Save}"
+                        Visibility="{Binding Show_SaveTool, Converter={StaticResource BoolToVis}}"
+                        Click="Save_Click"/>
 
-            <ToggleButton Style="{StaticResource ToolButton}" Content="✋" IsChecked="{Binding IsDrawingEnabled, Mode=TwoWay}">
-                <ToggleButton.ToolTip>
-                    <ToolTip Style="{StaticResource DynamicTip}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{DynamicResource Tip_DrawingEnabled}"/>
-                            <TextBlock Text=" [" Foreground="#888" Margin="5,0,0,0"/>
-                            <TextBlock Text="{Binding Settings.Hotkeys[ToggleDrawing].DisplayText}" Foreground="#3498DB"/>
-                            <TextBlock Text="]" Foreground="#888"/>
-                        </StackPanel>
-                    </ToolTip>
-                </ToggleButton.ToolTip>
-            </ToggleButton>
+                <Button Style="{StaticResource IconControlButtonStyle}"
+                        Visibility="{Binding Show_ClipboardTool, Converter={StaticResource BoolToVis}}"
+                        Content="{StaticResource ClipboardTool}"
+                        Click="Copy_Click">
+                    <Button.ToolTip>
+                        <ToolTip>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Tip_Copy}"/>
+                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
+                                <TextBlock Text="{Binding Settings.Hotkeys[Copy].DisplayText}" 
+                                           Foreground="#3498DB"/>
+                                <TextBlock Text="]" Foreground="#888"/>
+                            </StackPanel>
+                        </ToolTip>
+                    </Button.ToolTip>
+                </Button>
 
-            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
-
-            <Button x:Name="OptionsButton" Style="{StaticResource FlatButton}" Content="⚙" ToolTip="{DynamicResource Opt_Title}" Click="OptionsButton_Click"/>
-
-            <Rectangle Width="2" VerticalAlignment="Stretch" Margin="6,4" Fill="{StaticResource ToolbarBorder}"/>
-
-            <Button Style="{StaticResource FlatButton}" Content="—" ToolTip="{DynamicResource Tip_Minimize}" Click="MinimizeToTray_Click"/>
-            <Button Style="{StaticResource FlatButton}" Content="✖" ToolTip="{DynamicResource Tip_Close}" Click="Close_Click"/>
-
-        </StackPanel>
-    </Border>
+            </StackPanel>
+        </Border>
+    </Grid>
 </UserControl>

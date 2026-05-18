@@ -21,4 +21,6 @@ public interface IScreenServices
     /// собственные штрихи не попали в кадр
     /// </summary>
     byte[] CaptureRegionBgra(int screenX, int screenY, int width, int height);
+
+    byte[] CaptureLiveRegionBgra(int screenX, int screenY, int width, int height);
 }

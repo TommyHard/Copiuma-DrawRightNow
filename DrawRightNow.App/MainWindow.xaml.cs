@@ -3,39 +3,51 @@ using DrawRightNow.Core.Models;
 using DrawRightNow.Core.Models.Tools;
 using DrawRightNow.Core.ViewModels;
 using DrawRightNow.Interop;
-using DrawRightNow.Rendering;
-using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
+using Cursors = System.Windows.Input.Cursors;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
+using WinFormsScreen = System.Windows.Forms.Screen;
 
 namespace DrawRightNow.App;
 
 /// <summary>
-/// Окно-overlay. Делает три вещи:
+/// Окно-overlay. Делает:
 ///   1. Настраивает Win32 extended styles (TOPMOST/LAYERED/etc.)
-///   2. Слушает свойство IsDrawingEnabled и переключает WS_EX_TRANSPARENT,
-///      реализуя "PC interaction mode"
-///   3. Прячет/показывает toolbar в зависимости от наведения мыши и Pin
+///   2. Прячет/показывает toolbar в зависимости от наведения мыши и Pin
 /// </summary>
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm = new();
     private IntPtr _hwnd;
     private TrayIconService? _tray;
-    private LiveCaptureService? _liveCapture;
     private HotkeyManager? _hotkeys;
     private ExportService? _export;
+
+    private bool _isInitializing = true;
 
     public MainWindow()
     {
         InitializeComponent();
         DataContext = _vm;
+
+        Left = SystemParameters.VirtualScreenLeft;
+        Top = SystemParameters.VirtualScreenTop;
+        Width = SystemParameters.VirtualScreenWidth;
+        Height = SystemParameters.VirtualScreenHeight;
+
+        for (int i = 0; i < 25; i++)
+        {
+            var rect = new System.Windows.Shapes.Rectangle();
+            rect.Fill = new System.Windows.Media.SolidColorBrush();
+            PixelGrid.Children.Add(rect);
+        }
 
         _vm.PropertyChanged += OnViewModelPropertyChanged;
 
@@ -45,11 +57,22 @@ public partial class MainWindow : Window
 
         Loaded += (_, _) =>
         {
-            // По умолчанию IsToolbarPinned=true -> панель видна сразу.
-            // Если пользователь снимет «закрепить», панель будет авто-скрываться
             UpdateToolbarState(animated: false);
-            ApplyDimLayerVisibility();
+
+            if (_vm.RememberToolbarPosition)
+            {
+                ToolbarTransform.X = _vm.Settings.ToolbarOffsetX;
+                ToolbarTransform.Y = _vm.Settings.ToolbarOffsetY;
+            }
+
+            UpdateCursorForActiveTool();
+
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _isInitializing = false;
+            }), System.Windows.Threading.DispatcherPriority.Background);
         };
+
         Closing += OnClosing;
 
         // Глобальные горячие клавиши (для активного приложения)
@@ -62,38 +85,33 @@ public partial class MainWindow : Window
     private void OnSourceInitialized(object? sender, EventArgs e)
     {
         _hwnd = new WindowInteropHelper(this).Handle;
-        OverlayWindowHelper.Apply(_hwnd, clickThrough: !_vm.IsDrawingEnabled);
+
+        IntPtr currentExStyle = NativeMethods.GetWindowLongPtr(_hwnd, NativeMethods.GWL_EXSTYLE);
+        long newExStyle = currentExStyle.ToInt64() | (long)NativeMethods.WS_EX_TOOLWINDOW;
+        NativeMethods.SetWindowLongPtr(_hwnd, NativeMethods.GWL_EXSTYLE, new IntPtr(newExStyle));
+
+        RebuildMonitorList();
 
         var source = HwndSource.FromHwnd(_hwnd);
         source?.AddHook(NcHitTestHook);
 
-        // HWND готов — поднимаем сервисы
         _vm.ScreenServices = new WpfScreenServices(this);
 
-        var screenW = (int)SystemParameters.PrimaryScreenWidth;
-        var screenH = (int)SystemParameters.PrimaryScreenHeight;
-        _liveCapture = new LiveCaptureService(screenW, screenH);
-        _vm.FrameProvider = _liveCapture;
-
         _tray = new TrayIconService(this);
-        _export = new ExportService(this, _vm.Canvas);
+        _tray.IsVisible = _vm.ShowInTray;
 
-        // Глобальные хоткеи: Ctrl+Alt+* (Win+Shift+* конфликтует с системой)
+        _export = new ExportService(this, _vm.Canvas, _vm.ScreenServices);
+
         _hotkeys = new HotkeyManager(_hwnd);
         source?.AddHook(_hotkeys.WndProc);
-
         UpdateGlobalHotkeys();
 
-        const uint VK_D = 0x44, VK_E = 0x45, VK_Z = 0x5A, VK_Y = 0x59, VK_C = 0x43;
+        const uint VK_D = 0x44, VK_Z = 0x5A, VK_Y = 0x59, VK_C = 0x43;
         const uint CTRL_ALT = NativeMethods.MOD_CONTROL | NativeMethods.MOD_ALT;
 
         _hotkeys.Register(1, CTRL_ALT, VK_D, () =>
         {
             if (IsVisible) Hide(); else { Show(); Activate(); }
-        });
-        _hotkeys.Register(2, CTRL_ALT, VK_E, () =>
-        {
-            _vm.IsDrawingEnabled = !_vm.IsDrawingEnabled;
         });
         _hotkeys.Register(3, CTRL_ALT, VK_Z, () =>
         {
@@ -110,29 +128,35 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Per-pixel click-through: в режиме «не рисуем» клики пропускаем сквозь
-    /// окно, кроме тулбара и верхней hover-полоски (чтобы можно было
+    /// Per-pixel click-through: клики пропускаем сквозь
     /// вернуть рисование)
     /// </summary>
     private IntPtr NcHitTestHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         if (msg != NativeMethods.WM_NCHITTEST) return IntPtr.Zero;
-        if (_vm.IsDrawingEnabled) return IntPtr.Zero;     // обычный hit-test
 
-        // lParam: low = screenX, high = screenY (signed 16 бит)
         int lp = lParam.ToInt32();
         int sx = (short)(lp & 0xFFFF);
         int sy = (short)((lp >> 16) & 0xFFFF);
 
         var local = PointFromScreen(new System.Windows.Point(sx, sy));
 
-        // Зона, в которой нужно ловить клики, даже когда "click-through" on:
-        // верхние ~60 пикселей — туда умещаются и тулбар, и hover-стрип
-        const double InteractiveBandHeight = 60.0;
-        bool overInteractive = local.Y >= 0 && local.Y < InteractiveBandHeight;
+        bool overInteractive = false;
 
-        // Если открыт инлайн-редактор текста — тоже не пропускаем сквозь
+        if (_vm.ActiveTool != ToolType.None)
+        {
+            overInteractive = true;
+        }
+
         if (_vm.EditingText is not null) overInteractive = true;
+
+        // Проверка: находится ли мышь над реальным положением перетащенной панели
+        if (ToolbarHost != null && ToolbarHost.IsDescendantOf(this) && ToolbarHost.ActualWidth > 0)
+        {
+            var bounds = ToolbarHost.TransformToAncestor(this).TransformBounds(new Rect(0, 0, ToolbarHost.ActualWidth, ToolbarHost.ActualHeight));
+            bounds.Inflate(20, 20);
+            if (bounds.Contains(local)) overInteractive = true;
+        }
 
         handled = true;
         return overInteractive
@@ -142,12 +166,11 @@ public partial class MainWindow : Window
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainViewModel.IsDrawingEnabled))
+        if (e.PropertyName == nameof(MainViewModel.SelectedMonitor))
         {
-            // click-through решается в WM_NCHITTEST-hook
+            ApplyMonitorSelection();
         }
-        else if (e.PropertyName == nameof(MainViewModel.IsToolbarPinned) ||
-                 e.PropertyName == nameof(MainViewModel.ToolbarTranslucent))
+        else if (e.PropertyName == nameof(MainViewModel.ToolbarTranslucent))
         {
             UpdateToolbarState();
         }
@@ -158,19 +181,7 @@ public partial class MainWindow : Window
         else if (e.PropertyName == nameof(MainViewModel.ActiveTool))
         {
             UpdateEyedropperOverlayVisibility();
-        }
-        else if (e.PropertyName == nameof(MainViewModel.OverlayDimEnabled))
-        {
-            ApplyDimLayerVisibility();
-        }
-        else if (e.PropertyName == nameof(MainViewModel.LiveBlurEnabled))
-        {
-            // При первом (и последующих) включениях LiveBlur применяем ExcludeFromCapture,
-            // чтобы окно приложения больше не попадало в API захвата экрана Windows
-            if (_vm.LiveBlurEnabled)
-            {
-                OverlayWindowHelper.ExcludeFromCapture(_hwnd);
-            }
+            UpdateCursorForActiveTool();
         }
         else if (e.PropertyName == nameof(MainViewModel.ShowInTray))
         {
@@ -178,16 +189,39 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ApplyDimLayerVisibility()
-    {
-        DimLayer.Visibility = _vm.OverlayDimEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
     private void UpdateEyedropperOverlayVisibility()
     {
         EyedropperOverlay.Visibility = _vm.ActiveTool == ToolType.Eyedropper
             ? Visibility.Visible
             : Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// Меняет курсор холста (Surface) в зависимости от выбранного инструмента.
+    /// На кнопках toolbar курсор остаётся Hand из стиля — Cursor родительского
+    /// окна не наследуется насильно через ChildrenInheritCursor
+    /// </summary>
+    private void UpdateCursorForActiveTool()
+    {
+        var cursor = _vm.ActiveTool switch
+        {
+            ToolType.Pencil => Cursors.Pen,
+            ToolType.Brush => Cursors.Pen,
+            ToolType.Marker => Cursors.Pen,
+            ToolType.Eraser => Cursors.Cross,
+            ToolType.KnifeDelete => Cursors.Cross,
+            ToolType.Move => Cursors.SizeAll,
+            ToolType.Text => Cursors.IBeam,
+            ToolType.Rectangle => Cursors.Cross,
+            ToolType.Ellipse => Cursors.Cross,
+            ToolType.Line => Cursors.Cross,
+            ToolType.Arrow => Cursors.Cross,
+            ToolType.Blur => Cursors.Cross,
+            ToolType.Eyedropper => Cursors.Cross,
+            ToolType.AreaFill => Cursors.Cross,
+            _ => Cursors.Arrow
+        };
+        Surface.Cursor = cursor;
     }
 
     // ---- Инлайн-редактор текста (TextTool) ----
@@ -239,28 +273,45 @@ public partial class MainWindow : Window
             _vm.CommitTextEditing(TextEditor.Text);
     }
 
-    // ---- Экспорт (доступен из тулбара и через Win+Shift+C) ----
+    /// <summary>
+    /// Ctrl+колесо мыши в открытом редакторе текста меняет размер шрифта
+    /// существующей фигуры. Вне Ctrl — обычная прокрутка TextBox
+    /// </summary>
+    private void TextEditor_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return;
+        if (_vm.EditingText is null) return;
 
+        float delta = e.Delta > 0 ? 2f : -2f;
+        _vm.ChangeEditingFontSize(delta);
+
+        if (_vm.EditingText is { } ts)
+        {
+            TextEditor.FontSize = ts.FontSize;
+            Canvas.SetTop(TextEditor, ts.Position.Y - ts.FontSize * 1.1);
+        }
+        e.Handled = true;
+    }
+
+    // ---- Экспорт ----
     internal void SaveCanvasAs() => _export?.SaveAs();
     internal void CopyCanvasToClipboard() => _export?.CopyToClipboard();
 
     // ---- Toolbar auto-show ----
-
-    private bool _toolbarVisible;
     private bool _isHoveringToolbar;
-
-    private void HoverStrip_MouseEnter(object sender, MouseEventArgs e)
-    {
-        _isHoveringToolbar = true;
-        UpdateToolbarState();
-    }
 
     private void OnAnyMouseMove(object sender, MouseEventArgs e)
     {
         var p = e.GetPosition(this);
 
-        // Проверяем, находится ли мышь над тулбаром
-        bool overToolbar = p.Y < (ToolbarHost.ActualHeight + ToolbarHost.Margin.Top + 12);
+        bool overToolbar = false;
+
+        if (ToolbarHost != null && ToolbarHost.IsDescendantOf(this) && ToolbarHost.ActualWidth > 0)
+        {
+            var bounds = ToolbarHost.TransformToAncestor(this).TransformBounds(new Rect(0, 0, ToolbarHost.ActualWidth, ToolbarHost.ActualHeight));
+            bounds.Inflate(20, 20);
+            overToolbar = bounds.Contains(p);
+        }
 
         if (overToolbar != _isHoveringToolbar)
         {
@@ -268,14 +319,30 @@ public partial class MainWindow : Window
             UpdateToolbarState();
         }
 
-        // Live-превью цвета для Eyedropper
         if (_vm.ActiveTool == ToolType.Eyedropper && _vm.ScreenServices is not null)
         {
             var screen = PointToScreen(p);
-            var c = _vm.ScreenServices.GetPixel((int)screen.X, (int)screen.Y);
+            int cx = (int)screen.X;
+            int cy = (int)screen.Y;
 
-            EyedropperSwatch.Background = new System.Windows.Media.SolidColorBrush(
-                System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B));
+            // Регион 5x5
+            var pixels = _vm.ScreenServices.CaptureLiveRegionBgra(cx - 2, cy - 2, 5, 5);
+
+            if (pixels.Length == 100)
+            {
+                for (int i = 0; i < 25; i++)
+                {
+                    int offset = i * 4;
+                    byte b = pixels[offset];
+                    byte g = pixels[offset + 1];
+                    byte r = pixels[offset + 2];
+                    byte a = pixels[offset + 3];
+
+                    var rect = (System.Windows.Shapes.Rectangle)PixelGrid.Children[i];
+                    var brush = (System.Windows.Media.SolidColorBrush)rect.Fill;
+                    brush.Color = System.Windows.Media.Color.FromArgb(a, r, g, b);
+                }
+            }
 
             Canvas.SetLeft(EyedropperPreview, p.X);
             Canvas.SetTop(EyedropperPreview, p.Y);
@@ -284,50 +351,18 @@ public partial class MainWindow : Window
 
     private void UpdateToolbarState(bool animated = true)
     {
-        if (_vm.IsToolbarPinned)
+        ToolbarHost.IsHitTestVisible = true;
+
+        double target = (_isHoveringToolbar || !_vm.ToolbarTranslucent) ? 1.0 : 0.45;
+
+        if (animated)
         {
-            _toolbarVisible = true;
-            ToolbarHost.IsHitTestVisible = true;
-
-            // Если полупрозрачность включена и мышь убрана — 0.45, иначе 1.0
-            double target = (_isHoveringToolbar || !_vm.ToolbarTranslucent) ? 1.0 : 0.45;
-
-            if (animated)
-                ToolbarHost.BeginAnimation(OpacityProperty, new DoubleAnimation(target, TimeSpan.FromMilliseconds(120)));
-            else
-            {
-                ToolbarHost.BeginAnimation(OpacityProperty, null);
-                ToolbarHost.Opacity = target;
-            }
+            ToolbarHost.BeginAnimation(OpacityProperty, new DoubleAnimation(target, TimeSpan.FromMilliseconds(120)));
         }
         else
         {
-            if (_isHoveringToolbar)
-            {
-                _toolbarVisible = true;
-                ToolbarHost.IsHitTestVisible = true;
-
-                if (animated)
-                    ToolbarHost.BeginAnimation(OpacityProperty, new DoubleAnimation(1.0, TimeSpan.FromMilliseconds(120)));
-                else
-                {
-                    ToolbarHost.BeginAnimation(OpacityProperty, null);
-                    ToolbarHost.Opacity = 1.0;
-                }
-            }
-            else
-            {
-                _toolbarVisible = false;
-                ToolbarHost.IsHitTestVisible = false;
-
-                if (animated)
-                    ToolbarHost.BeginAnimation(OpacityProperty, new DoubleAnimation(0.0, TimeSpan.FromMilliseconds(180)));
-                else
-                {
-                    ToolbarHost.BeginAnimation(OpacityProperty, null);
-                    ToolbarHost.Opacity = 0.0;
-                }
-            }
+            ToolbarHost.BeginAnimation(OpacityProperty, null);
+            ToolbarHost.Opacity = target;
         }
     }
 
@@ -337,16 +372,12 @@ public partial class MainWindow : Window
     {
         if (_hotkeys == null) return;
 
-        // Сбрасываем старые
         _hotkeys.ClearAll();
 
         var h = _vm.Settings.Hotkeys;
 
         if (h.TryGetValue("ToggleOverlay", out var c1))
             _hotkeys.Register(1, c1.Modifiers, c1.VirtualKey, () => { if (IsVisible) Hide(); else { Show(); Activate(); } });
-
-        if (h.TryGetValue("ToggleDrawing", out var c2))
-            _hotkeys.Register(2, c2.Modifiers, c2.VirtualKey, () => _vm.IsDrawingEnabled = !_vm.IsDrawingEnabled);
 
         if (h.TryGetValue("Undo", out var c3))
             _hotkeys.Register(3, c3.Modifiers, c3.VirtualKey, () => { if (_vm.UndoCommand.CanExecute(null)) _vm.UndoCommand.Execute(null); });
@@ -362,19 +393,15 @@ public partial class MainWindow : Window
     {
         if (_vm.EditingText is not null) return;
 
-        // Встроенные системные
-        if (e.Key == Key.F8) { _vm.IsDrawingEnabled = !_vm.IsDrawingEnabled; e.Handled = true; return; }
         if (e.Key == Key.Escape)
         {
-            if (_vm.IsToolbarPinned) _vm.IsToolbarPinned = false;
-            else Close();
+            Close();
             e.Handled = true;
             return;
         }
 
         Key key = (e.Key == Key.System) ? e.SystemKey : e.Key;
 
-        // Формируем нажатую комбинацию
         var modifiers = Keyboard.Modifiers;
         string pressedCombo = "";
 
@@ -384,10 +411,8 @@ public partial class MainWindow : Window
 
         pressedCombo += key.ToString();
 
-        // Динамические хоткеи инструментов
         foreach (var kvp in _vm.Settings.ToolHotkeys)
         {
-            // Сравниваем с собранной комбинацией
             if (kvp.Value == pressedCombo && Enum.TryParse<ToolType>(kvp.Key, out var tool))
             {
                 _vm.ActiveTool = tool;
@@ -399,9 +424,172 @@ public partial class MainWindow : Window
 
     private void OnClosing(object? sender, CancelEventArgs e)
     {
+        if (_vm.RememberToolbarPosition)
+        {
+            _vm.Settings.ToolbarOffsetX = ToolbarTransform.X;
+            _vm.Settings.ToolbarOffsetY = ToolbarTransform.Y;
+            _vm.Settings.Save();
+        }
+
         _vm.PropertyChanged -= OnViewModelPropertyChanged;
         _hotkeys?.Dispose(); _hotkeys = null;
         _tray?.Dispose(); _tray = null;
-        _liveCapture?.Dispose(); _liveCapture = null;
+    }
+
+    // ---- Перетаскивание Toolbar ----
+
+    private bool _isDraggingToolbar;
+    private System.Windows.Point _toolbarDragStart;
+
+    private void ToolbarHost_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (_vm.IsToolbarLocked) return;
+        if (IsInsidePopup(e.OriginalSource as DependencyObject)) return;
+
+        _isDraggingToolbar = true;
+        _toolbarDragStart = e.GetPosition(this);
+        ToolbarHost.CaptureMouse();
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Поднимается по визуальному и логическому дереву от <paramref name="d"/>
+    /// и возвращает true, если по пути встречается элемент <see cref="System.Windows.Controls.Primitives.Popup"/>
+    /// </summary>
+    private static bool IsInsidePopup(DependencyObject? d)
+    {
+        while (d is not null)
+        {
+            if (d is System.Windows.Controls.Primitives.Popup) return true;
+
+            var parent = d is Visual or System.Windows.Media.Media3D.Visual3D
+                ? VisualTreeHelper.GetParent(d)
+                : null;
+
+            parent ??= LogicalTreeHelper.GetParent(d);
+            d = parent;
+        }
+        return false;
+    }
+
+    private void ToolbarHost_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (_isDraggingToolbar)
+        {
+            var p = e.GetPosition(this);
+            var dx = p.X - _toolbarDragStart.X;
+            var dy = p.Y - _toolbarDragStart.Y;
+            _toolbarDragStart = p;
+
+            ToolbarTransform.X += dx;
+            ToolbarTransform.Y += dy;
+        }
+    }
+
+    private void ToolbarHost_MouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_isDraggingToolbar)
+        {
+            _isDraggingToolbar = false;
+            ToolbarHost.ReleaseMouseCapture();
+            e.Handled = true;
+        }
+    }
+
+    // ---- Multi-monitor ----
+
+    /// <summary>
+    /// Перечисляет физические мониторы и заполняет MainViewModel.Monitors.
+    /// Координаты конвертируются из пикселей в DIP (WPF logical units),
+    /// чтобы их можно было присвоить Window.Left/Top/Width/Height
+    /// </summary>
+    private void RebuildMonitorList()
+    {
+        var dpi = GetDpiScale();
+        _vm.Monitors.Clear();
+
+        var allMonitors = new MonitorInfo
+        {
+            Index = -1,
+            DisplayName = (TryFindResource("Mon_All") as string) ?? "Все мониторы",
+            Left = SystemParameters.VirtualScreenLeft,
+            Top = SystemParameters.VirtualScreenTop,
+            Width = SystemParameters.VirtualScreenWidth,
+            Height = SystemParameters.VirtualScreenHeight,
+            IsAllMonitors = true,
+            IsPrimary = false
+        };
+        _vm.Monitors.Add(allMonitors);
+
+        var screens = WinFormsScreen.AllScreens;
+        for (int i = 0; i < screens.Length; i++)
+        {
+            var s = screens[i];
+            var caption = (TryFindResource("Mon_Display") as string) ?? "Монитор";
+            var primaryTag = s.Primary ? " (" + ((TryFindResource("Mon_Primary") as string) ?? "Основной") + ")" : "";
+
+            _vm.Monitors.Add(new MonitorInfo
+            {
+                Index = i,
+                DisplayName = $"{caption} {i + 1}{primaryTag}  —  {s.Bounds.Width}×{s.Bounds.Height}",
+                Left = s.Bounds.Left / dpi.X,
+                Top = s.Bounds.Top / dpi.Y,
+                Width = s.Bounds.Width / dpi.X,
+                Height = s.Bounds.Height / dpi.Y,
+                IsPrimary = s.Primary,
+                IsAllMonitors = false
+            });
+        }
+
+        _vm.SelectedMonitor = _vm.Monitors.FirstOrDefault(m => m.IsPrimary) ?? allMonitors;
+    }
+
+    /// <summary>
+    /// Перемещает/растягивает overlay так, чтобы он покрывал выбранный
+    /// MonitorInfo. Сбрасывает оффсет перетащенного toolbar, чтобы
+    /// он не уехал "за пределы" нового экрана
+    /// </summary>
+    private void ApplyMonitorSelection()
+    {
+        var m = _vm.SelectedMonitor;
+        if (m is null) return;
+
+        if (WindowState != WindowState.Normal) WindowState = WindowState.Normal;
+
+        Left = m.Left;
+        Top = m.Top;
+        Width = m.Width;
+        Height = m.Height;
+
+        if (!_isInitializing)
+        {
+            ToolbarTransform.X = 0;
+            ToolbarTransform.Y = 0;
+        }
+        else if (_vm.RememberToolbarPosition)
+        {
+            ToolbarTransform.X = _vm.Settings.ToolbarOffsetX;
+            ToolbarTransform.Y = _vm.Settings.ToolbarOffsetY;
+        }
+
+        _vm.IsMonitorPickerOpen = false;
+    }
+
+    /// <summary>
+    /// Возвращает текущий DPI-scale окна (для конвертации пиксели -> DIP)
+    /// </summary>
+    private (double X, double Y) GetDpiScale()
+    {
+        try
+        {
+            var dpi = VisualTreeHelper.GetDpi(this);
+            var sx = dpi.DpiScaleX <= 0 ? 1.0 : dpi.DpiScaleX;
+            var sy = dpi.DpiScaleY <= 0 ? 1.0 : dpi.DpiScaleY;
+            return (sx, sy);
+        }
+        catch
+        {
+            return (1.0, 1.0);
+        }
     }
 }

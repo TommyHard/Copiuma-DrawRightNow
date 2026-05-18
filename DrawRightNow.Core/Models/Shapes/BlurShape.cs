@@ -1,13 +1,9 @@
-﻿using System;
-
-namespace DrawRightNow.Core.Models.Shapes;
+﻿namespace DrawRightNow.Core.Models.Shapes;
 
 /// <summary>
 /// Снимок прямоугольного региона экрана. Растровый: хранит "сырые" пиксели
 /// (BGRA, формат GetDIBits) — рендер преобразует в SKImage и применяет
-/// blur-фильтр через GPU. 
-/// Преимущество: один захват, потом любое количество
-/// перерисовок без повторного обращения к экрану
+/// blur-фильтр через GPU
 /// </summary>
 public sealed class BlurShape : IShape
 {

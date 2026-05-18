@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace DrawRightNow.Interop;
+﻿namespace DrawRightNow.Interop;
 
 /// <summary>
 /// Регистрация глобальных хоткеев через RegisterHotKey.

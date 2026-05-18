@@ -1,0 +1,137 @@
+﻿<UserControl x:Class="DrawRightNow.App.Views.SecondaryToolbarView"
+             x:Name="SecondaryRoot"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:DrawRightNow.App.Views"
+             Background="Transparent">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource CoreBorderStyle}"
+            Padding="5">
+
+        <StackPanel Orientation="Horizontal">
+
+            <ToggleButton Style="{StaticResource IconToggleTwoStateButtonStyle}"
+                          Width="30" Height="30"
+                          Content="{StaticResource ButtonDragStateAllowed}"
+                          Tag="{StaticResource ButtonDragStateNotAllowed}"
+                          ToolTip="{DynamicResource Tip_Lock}"
+                          IsChecked="{Binding IsToolbarLocked, Mode=TwoWay}"/>
+
+            <Button Style="{StaticResource IconControlButtonStyle}"
+                    Width="30" Height="30"
+                    Content="{StaticResource ChangePositionTool}"
+                    ToolTip="{DynamicResource Opt_ChangePosition}"
+                    Visibility="{Binding Show_ChangePositionTool, Converter={StaticResource BoolToVis}}"
+                    Command="{Binding CycleDockCommand}"/>
+
+            <Rectangle Style="{StaticResource ToolbarDivider}"/>
+
+            <ToggleButton Style="{StaticResource IconToggleButtonStyle}"
+                          Width="48" Height="30"
+                          Content="{StaticResource ButtonFadingMode}" 
+                          ToolTip="{DynamicResource Tip_ToolbarTranslucent}" 
+                          Visibility="{Binding Show_FadingMode, Converter={StaticResource BoolToVis}}"
+                          IsChecked="{Binding ToolbarTranslucent, Mode=TwoWay}"/>
+
+            <Slider MinWidth="150" Height="30" 
+                    Margin="4 0" 
+                    Minimum="0" Maximum="100" 
+                    ToolTip="{DynamicResource Tip_OverlayDim}" 
+                    Value="{Binding OverlayDimAlpha, Mode=TwoWay}" 
+                    Style="{StaticResource BlueAccentSliderStyle}"/>
+
+            <Rectangle Style="{StaticResource ToolbarDivider}"/>
+            
+            <ToggleButton x:Name="MonitorButton" 
+                          Style="{StaticResource IconToggleButtonStyle}"
+                          Width="30" Height="30"
+                          Content="{StaticResource MonitorsTool}" 
+                          ToolTip="{DynamicResource Tip_Monitor}" 
+                          IsChecked="{Binding IsMonitorPickerOpen, Mode=TwoWay}"/>
+            <Popup IsOpen="{Binding IsMonitorPickerOpen}" 
+                   PlacementTarget="{Binding ElementName=MonitorButton}" 
+                   Placement="Bottom" 
+                   VerticalOffset="12" 
+                   AllowsTransparency="True" 
+                   PopupAnimation="Fade" 
+                   StaysOpen="False">
+                <Border Background="#F21E1E22" 
+                        BorderBrush="#FF4A4A5A" 
+                        BorderThickness="1" 
+                        CornerRadius="8" 
+                        Padding="6">
+                    <ListBox ItemsSource="{Binding Monitors}" 
+                             SelectedItem="{Binding SelectedMonitor, Mode=TwoWay}" 
+                             Background="Transparent" 
+                             BorderThickness="0" 
+                             Foreground="White" 
+                             MinWidth="220" 
+                             HorizontalContentAlignment="Stretch">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListBoxItem}">
+                                <Setter Property="Background"   Value="Transparent"/>
+                                <Setter Property="Padding"      Value="0"/>
+                                <Setter Property="Margin"       Value="0,1"/>
+                                <Setter Property="Foreground"   Value="#DDD"/>
+                                <Setter Property="Cursor"       Value="Hand"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                            <Border x:Name="Bd" Background="{TemplateBinding Background}" 
+                                                    CornerRadius="4" 
+                                                    Padding="8 5">
+                                                <ContentPresenter VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="#22FFFFFF"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="#443498DB"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayName}" 
+                                           FontSize="13"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </Popup>
+
+            <Button x:Name="OptionsButton" 
+                    Style="{StaticResource IconControlButtonStyle}"
+                    Width="30" Height="30"
+                    Content="{StaticResource Setting}" 
+                    ToolTip="{DynamicResource Opt_Title}" 
+                    Click="OptionsButton_Click"/>
+
+            <Rectangle Style="{StaticResource ToolbarDivider}"/>
+
+            <Button Style="{StaticResource IconControlButtonStyle}"
+                    Width="30" Height="30"
+                    Content="{StaticResource ButtonMinimize}" 
+                    ToolTip="{DynamicResource Tip_Minimize}" 
+                    Click="MinimizeToTray_Click"/>
+
+            <Button Style="{StaticResource IconControlButtonStyle}"
+                    Width="30" Height="30"
+                    Content="{StaticResource ButtonClose}" 
+                    ToolTip="{DynamicResource Tip_Close}" 
+                    Click="Close_Click"/>
+
+        </StackPanel>
+    </Border>
+</UserControl>

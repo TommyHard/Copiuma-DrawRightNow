@@ -1,10 +1,8 @@
-﻿using System;
-using System.Threading;
-using System.Windows;
-using System.Windows.Threading;
-using DrawRightNow.Core.Models;
+﻿using DrawRightNow.Core.Models;
 using DrawRightNow.Core.Services;
 using DrawRightNow.Interop;
+using System.Windows;
+using System.Windows.Threading;
 
 namespace DrawRightNow.App.Services;
 
@@ -52,5 +50,10 @@ public sealed class WpfScreenServices : IScreenServices
     private void Flush(DispatcherPriority priority)
     {
         _overlay.Dispatcher.Invoke(() => { }, priority);
+    }
+
+    public byte[] CaptureLiveRegionBgra(int screenX, int screenY, int width, int height)
+    {
+        return ScreenCapture.CaptureRegion(screenX, screenY, width, height);
     }
 }

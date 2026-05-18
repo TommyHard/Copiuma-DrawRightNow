@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DrawRightNow.Core.Models.Shapes;
+﻿namespace DrawRightNow.Core.Models.Shapes;
 
 /// <summary>
 /// Общий базовый класс для двухточечных фигур (Rectangle, Ellipse, Line, Arrow)

@@ -11,45 +11,53 @@
     <s:String x:Key="Tip_Line">Line</s:String>
     <s:String x:Key="Tip_Arrow">Arrow</s:String>
     <s:String x:Key="Tip_Text">Text</s:String>
-    <s:String x:Key="Tip_Knife">Knife — delete shape on click</s:String>
+    <s:String x:Key="Tip_Knife">Knife — delete shape</s:String>
     <s:String x:Key="Tip_Move">Move</s:String>
     <s:String x:Key="Tip_Eyedropper">Eyedropper — pick color from screen</s:String>
     <s:String x:Key="Tip_Blur">Blur a screen region</s:String>
-    <s:String x:Key="Tip_LiveBlur">Live mode — keep blurring as content beneath changes</s:String>
-    <s:String x:Key="Tip_BlurSigma">Blur strength (sigma)</s:String>
 
     <s:String x:Key="Tip_Undo">Undo</s:String>
     <s:String x:Key="Tip_Redo">Redo</s:String>
     <s:String x:Key="Tip_Clear">Clear canvas</s:String>
     <s:String x:Key="Tip_Save">Save as PNG/JPG</s:String>
     <s:String x:Key="Tip_Copy">Copy to clipboard</s:String>
-    
+
     <s:String x:Key="Tip_StrokeWidth">Stroke width</s:String>
+    <s:String x:Key="Tip_ColorPalette">Palette</s:String>
     <s:String x:Key="Tip_Fill">Fill shapes</s:String>
-    <s:String x:Key="Tip_Pin">Pin toolbar</s:String>
+    <s:String x:Key="Tip_Lock">Lock toolbar position</s:String>
+    <s:String x:Key="Tip_Vertical">Vertical toolbar layout</s:String>
+    <s:String x:Key="Tip_Monitor">Choose monitor for overlay and toolbar</s:String>
+    <s:String x:Key="Mon_All">All monitors</s:String>
+    <s:String x:Key="Mon_Display">Monitor</s:String>
+    <s:String x:Key="Mon_Primary">Primary</s:String>
     <s:String x:Key="Tip_ToolbarTranslucent">Translucent toolbar</s:String>
     <s:String x:Key="Tip_OverlayDim">Highlight drawing area</s:String>
     <s:String x:Key="Tip_DrawingEnabled">Drawing mode / click-through</s:String>
     <s:String x:Key="Tip_Minimize">Minimize to tray</s:String>
     <s:String x:Key="Tip_Close">Exit</s:String>
+    <s:String x:Key="Tip_CloseWindow">Close</s:String>
     <s:String x:Key="Tip_Language">Toggle language EN/RU</s:String>
 
+    <s:String x:Key="Cp_Title">Color selection</s:String>
+    
     <s:String x:Key="Opt_Title">Settings</s:String>
     <s:String x:Key="Opt_General">General</s:String>
     <s:String x:Key="Opt_Panel">Toolbar</s:String>
-    <s:String x:Key="Opt_GlobalHotkeys">Global Hotkeys</s:String>
+    <s:String x:Key="Opt_GlobalHotkeys">Hotkeys</s:String>
     <s:String x:Key="Opt_ToolHotkeys">Tools Hotkeys</s:String>
+    <s:String x:Key="Opt_ChangePosition">Change panel position</s:String>
 
     <s:String x:Key="Opt_Tray">Show icon in system tray</s:String>
-    <s:String x:Key="Opt_Lang">Language / Язык интерфейса:</s:String>
+    <s:String x:Key="Opt_RememberPosition">Remember toolbar position on exit</s:String>
+    <s:String x:Key="Opt_Lang">Language:</s:String>
+    <s:String x:Key="Opt_ToolsVisibility">Toggling Tool Visibility:</s:String>
 
     <s:String x:Key="Opt_PressKey">Press any key...</s:String>
     <s:String x:Key="Opt_DescGlobal">Work anywhere (Ctrl+Alt+...):</s:String>
     <s:String x:Key="Opt_DescLocal">Work only when drawing:</s:String>
 
     <s:String x:Key="Opt_ActOverlay">Show/Hide UI</s:String>
-    <s:String x:Key="Opt_ActDraw">Toggle Draw Mode</s:String>
     <s:String x:Key="Opt_ActUndo">Undo</s:String>
     <s:String x:Key="Opt_ActRedo">Redo</s:String>
-    <s:String x:Key="Opt_ActCopy">Copy</s:String>
 </ResourceDictionary>

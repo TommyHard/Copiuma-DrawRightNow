@@ -1,9 +1,7 @@
-﻿using System;
+﻿using DrawRightNow.Core.Models;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
-using DrawRightNow.Core.Models;
-
 using Color = System.Windows.Media.Color;
 
 namespace DrawRightNow.App.Converters;

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using SkiaSharp;
+﻿using SkiaSharp;
 
 namespace DrawRightNow.Rendering;
 
 /// <summary>
-/// Object Pool для SKPaint. Создание SKPaint — тяжёлая операция;
-/// вместо аллокации на каждый штрих храним
-/// один экземпляр под каждое сочетание режимов и переписываем у него поля
+/// Object Pool для SKPaint
 /// </summary>
 internal sealed class SkiaPaintPool
 {
@@ -66,7 +62,7 @@ internal sealed class SkiaPaintPool
     }
 
     /// <summary>
-    /// Совместимость со старыми вызовами — алиас на GetStroke
+    /// Совместимость со старыми вызовами — alias на GetStroke
     /// </summary>
     public SKPaint Get(SKColor color, float width, bool antialias, SKBlendMode blend, SKStrokeCap cap)
         => GetStroke(color, width, antialias, blend, cap);

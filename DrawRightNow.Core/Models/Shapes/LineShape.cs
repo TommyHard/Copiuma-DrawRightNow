@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DrawRightNow.Core.Models.Shapes;
+﻿namespace DrawRightNow.Core.Models.Shapes;
 
 /// <summary>
 /// Прямая линия от Start к End. Hit-Testing — расстояние до сегмента

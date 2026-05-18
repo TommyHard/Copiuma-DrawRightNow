@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace DrawRightNow.Core.Models.Shapes;
+﻿namespace DrawRightNow.Core.Models.Shapes;
 
 /// <summary>
 /// Свободная линия — общий контейнер для Pencil/Brush/Marker
-/// Точки хранятся в одном списке (List&lt;PointF&gt;), что даёт компактный
-/// массив значений в куче
+/// Точки хранятся в одном списке (List&lt;PointF&gt)
 /// </summary>
 public sealed class StrokeShape : IShape
 {

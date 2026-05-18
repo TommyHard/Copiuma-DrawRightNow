@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DrawRightNow.Core.Models;
+﻿namespace DrawRightNow.Core.Models;
 
 /// <summary>
 /// Лёгкая структура координаты

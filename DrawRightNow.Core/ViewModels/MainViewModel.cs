@@ -1,40 +1,34 @@
-﻿using System;
-using DrawRightNow.Core.Commands;
+﻿using DrawRightNow.Core.Commands;
 using DrawRightNow.Core.Models;
 using DrawRightNow.Core.Models.Shapes;
 using DrawRightNow.Core.Models.Tools;
 using DrawRightNow.Core.Mvvm;
 using DrawRightNow.Core.Services;
+using System.Collections.ObjectModel;
 
 namespace DrawRightNow.Core.ViewModels;
 
-/// <summary>
-/// Главная ViewModel. Содержит canvas, историю Undo/Redo, активный
-/// инструмент и текущие настройки (цвет, толщина). Платформо-независима;
-/// специальные инструменты (Knife, Move, Eyedropper, Blur) маршрутизируются
-/// здесь же по типу ActiveTool
-/// </summary>
 public sealed class MainViewModel : ObservableObject
 {
     private readonly RelayCommand _undoCmd;
     private readonly RelayCommand _redoCmd;
     private readonly RelayCommand _clearCmd;
+    private readonly RelayCommand _cycleDockCmd;
 
     private ITool? _tool;
     private bool _isOptionsOpen;
-    private ToolType _activeTool = ToolType.Pencil;
+    private ToolType _activeTool = ToolType.None;
     private ColorRgba _strokeColor = ColorRgba.Red;
     private float _strokeWidth = 3f;
-    private bool _isToolbarPinned = true;        // По умолчанию тулбар закреплён — иначе при запуске не видно ничего
-    private bool _isDrawingEnabled = true;
-    private bool _toolbarTranslucent = false;    // Тогл "панель сквозь" — opacity 1.0/0.45
-    private bool _overlayDimEnabled = true;     // Видимая полупрозрачная подложка холста
+    private bool _isToolbarLocked = false;
+    private bool _toolbarTranslucent = false;
+    private int _overlayDimAlpha = 20;
     private bool _fillEnabled = false;
-    private bool _liveBlurEnabled = false;
     private bool _isColorPickerOpen;
+    private bool _isMonitorPickerOpen;
+    private MonitorInfo? _selectedMonitor;
     private TextShape? _editingText;
 
-    // Move state
     private IShape? _movingShape;
     private PointF _moveLastPoint;
     private float _moveTotalDx;
@@ -44,7 +38,8 @@ public sealed class MainViewModel : ObservableObject
     private PointF _blurStartLocal;
     private PointF _blurStartScreen;
     private RectangleShape? _blurPreview;
-    private float _blurSigma = 16f;
+
+    private const float BlurMaxSigma = 100;
 
     public AppSettings Settings { get; } = AppSettings.Load();
 
@@ -59,6 +54,9 @@ public sealed class MainViewModel : ObservableObject
         _redoCmd = new RelayCommand(_ => History.Redo(), _ => History.CanRedo);
         _clearCmd = new RelayCommand(_ => Clear(), _ => Canvas.Shapes.Count > 0);
 
+        // Для циклического переключения позиции
+        _cycleDockCmd = new RelayCommand(_ => CycleToolbarDock());
+
         History.Changed += (_, _) =>
         {
             _undoCmd.RaiseCanExecuteChanged();
@@ -72,28 +70,7 @@ public sealed class MainViewModel : ObservableObject
     public CanvasModel Canvas { get; }
     public CommandHistory History { get; }
 
-    /// <summary>
-    /// Сервисы уровня экрана (захват пикселя/региона). Инжектится из App-слоя
-    /// после создания окна (нужен HWND). Без них Eyedropper/Blur просто
-    /// no-op — приложение не падает
-    /// </summary>
     public IScreenServices? ScreenServices { get; set; }
-
-    /// <summary>
-    /// Источник «живого» кадра экрана. Опциональный — без него Live-blur
-    /// автоматически переключается на статический снимок
-    /// </summary>
-    public IFrameProvider? FrameProvider { get; set; }
-
-    /// <summary>
-    /// Когда true, инструмент Blur создаёт LiveBlurShape (видео под областью
-    /// продолжает двигаться размыто). Иначе — статический снимок (BlurShape)
-    /// </summary>
-    public bool LiveBlurEnabled
-    {
-        get => _liveBlurEnabled;
-        set => SetField(ref _liveBlurEnabled, value);
-    }
 
     public bool IsOptionsOpen
     {
@@ -127,6 +104,7 @@ public sealed class MainViewModel : ObservableObject
     public bool Show_Text { get => IsToolVisible(ToolType.Text); set => ToggleToolVisibility(ToolType.Text, value); }
     public bool Show_KnifeDelete { get => IsToolVisible(ToolType.KnifeDelete); set => ToggleToolVisibility(ToolType.KnifeDelete, value); }
     public bool Show_Move { get => IsToolVisible(ToolType.Move); set => ToggleToolVisibility(ToolType.Move, value); }
+    public bool Show_AreaFill { get => IsToolVisible(ToolType.AreaFill); set => ToggleToolVisibility(ToolType.AreaFill, value); }
     public bool Show_Eyedropper { get => IsToolVisible(ToolType.Eyedropper); set => ToggleToolVisibility(ToolType.Eyedropper, value); }
     public bool Show_Blur { get => IsToolVisible(ToolType.Blur); set => ToggleToolVisibility(ToolType.Blur, value); }
 
@@ -136,9 +114,109 @@ public sealed class MainViewModel : ObservableObject
         set { Settings.ShowInTray = value; Settings.Save(); OnPropertyChanged(); }
     }
 
+    public bool Show_WidthSlider
+    {
+        get => Settings.ShowWidthSlider;
+        set
+        {
+            if (Settings.ShowWidthSlider == value) return;
+            Settings.ShowWidthSlider = value;
+            Settings.Save();
+            OnPropertyChanged();
+        }
+    }
+
+    public bool Show_ClearTool
+    {
+        get => Settings.ShowClearTool;
+        set
+        {
+            if (Settings.ShowClearTool == value) return;
+            Settings.ShowClearTool = value;
+            Settings.Save();
+            OnPropertyChanged();
+        }
+    }
+
+    public bool Show_SaveTool
+    {
+        get => Settings.ShowSaveTool;
+        set
+        {
+            if (Settings.ShowSaveTool == value) return;
+            Settings.ShowSaveTool = value;
+            Settings.Save();
+            OnPropertyChanged();
+        }
+    }
+
+    public bool Show_ClipboardTool
+    {
+        get => Settings.ShowClipboardTool;
+        set
+        {
+            if (Settings.ShowClipboardTool == value) return;
+            Settings.ShowClipboardTool = value;
+            Settings.Save();
+            OnPropertyChanged();
+        }
+    }
+
+    public bool Show_ChangePositionTool
+    {
+        get => Settings.ShowChangePositionTool;
+        set
+        {
+            if (Settings.ShowChangePositionTool == value) return;
+            Settings.ShowChangePositionTool = value;
+            Settings.Save();
+            OnPropertyChanged();
+        }
+    }
+
+    public bool Show_FadingMode
+    {
+        get => Settings.ShowFadingMode;
+        set
+        {
+            if (Settings.ShowFadingMode == value) return;
+            Settings.ShowFadingMode = value;
+            Settings.Save();
+            OnPropertyChanged();
+        }
+    }
+
     public RelayCommand UndoCommand => _undoCmd;
     public RelayCommand RedoCommand => _redoCmd;
     public RelayCommand ClearCommand => _clearCmd;
+    public RelayCommand CycleDockCommand => _cycleDockCmd;
+
+    // Свойство для привязки позиции панели
+    public string ToolbarDock
+    {
+        get => Settings.ToolbarDock;
+        set
+        {
+            if (Settings.ToolbarDock != value)
+            {
+                Settings.ToolbarDock = value;
+                Settings.Save();
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private void CycleToolbarDock()
+    {
+        var docks = new[] { "BottomRight", "BottomLeft", "TopLeft", "TopRight" };
+        int idx = Array.IndexOf(docks, ToolbarDock);
+        if (idx == -1)
+        {
+            idx = 3;
+        }
+
+        ToolbarDock = docks[(idx + 1) % docks.Length];
+    }
 
     public ToolType ActiveTool
     {
@@ -148,16 +226,6 @@ public sealed class MainViewModel : ObservableObject
             if (SetField(ref _activeTool, value))
             {
                 OnPropertyChanged(nameof(ActiveToolDisplayName));
-
-                // Включаем или выключаем режим рисования в зависимости от выбранного инструмента
-                if (_activeTool == ToolType.None)
-                {
-                    IsDrawingEnabled = false;
-                }
-                else if (!IsDrawingEnabled)
-                {
-                    IsDrawingEnabled = true;
-                }
             }
         }
     }
@@ -212,50 +280,57 @@ public sealed class MainViewModel : ObservableObject
         set => SetField(ref _strokeWidth, value);
     }
 
-    /// <summary>
-    /// Sigma (радиус) для blur-фильтра
-    /// </summary>
-    public float BlurSigma
+    public bool IsToolbarLocked
     {
-        get => _blurSigma;
-        set => SetField(ref _blurSigma, value);
+        get => _isToolbarLocked;
+        set => SetField(ref _isToolbarLocked, value);
     }
 
-    public bool IsToolbarPinned
+    public bool RememberToolbarPosition
     {
-        get => _isToolbarPinned;
-        set => SetField(ref _isToolbarPinned, value);
+        get => Settings.RememberToolbarPosition;
+        set
+        {
+            if (Settings.RememberToolbarPosition == value) return;
+            Settings.RememberToolbarPosition = value;
+            Settings.Save();
+            OnPropertyChanged();
+        }
     }
 
-    /// <summary>
-    /// Полупрозрачность тулбара
-    /// </summary>
+    public ObservableCollection<MonitorInfo> Monitors { get; } = new();
+
+    public MonitorInfo? SelectedMonitor
+    {
+        get => _selectedMonitor;
+        set => SetField(ref _selectedMonitor, value);
+    }
+
+    public bool IsMonitorPickerOpen
+    {
+        get => _isMonitorPickerOpen;
+        set => SetField(ref _isMonitorPickerOpen, value);
+    }
+
     public bool ToolbarTranslucent
     {
         get => _toolbarTranslucent;
         set => SetField(ref _toolbarTranslucent, value);
     }
 
-    /// <summary>
-    /// Делает холст слегка видимым (тонкий dark-tint), чтобы пользователь
-    /// понимал, где можно рисовать. Не путать с IsDrawingEnabled
-    /// </summary>
-    public bool OverlayDimEnabled
+    public int OverlayDimAlpha
     {
-        get => _overlayDimEnabled;
-        set => SetField(ref _overlayDimEnabled, value);
+        get => _overlayDimAlpha;
+        set
+        {
+            var clamped = value < 0 ? 0 : (value > 100 ? 100 : value);
+            if (SetField(ref _overlayDimAlpha, clamped))
+                OnPropertyChanged(nameof(OverlayDimOpacity));
+        }
     }
 
-    public bool IsDrawingEnabled
-    {
-        get => _isDrawingEnabled;
-        set => SetField(ref _isDrawingEnabled, value);
-    }
+    public double OverlayDimOpacity => _overlayDimAlpha / 100.0;
 
-    /// <summary>
-    /// Заливка для геометрических фигур (Rectangle/Ellipse). Цвет заливки —
-    /// текущий StrokeColor с альфой 0x60. Включается в тулбаре
-    /// </summary>
     public bool FillEnabled
     {
         get => _fillEnabled;
@@ -270,7 +345,7 @@ public sealed class MainViewModel : ObservableObject
 
     public void OnInputDown(PointF local, PointF screen)
     {
-        if (!_isDrawingEnabled) return;
+        if (_activeTool == ToolType.None) return;
 
         switch (_activeTool)
         {
@@ -341,8 +416,6 @@ public sealed class MainViewModel : ObservableObject
             EditingText = ts;
     }
 
-    // ---- Knife ----
-
     private void HandleKnifeClick(PointF p)
     {
         var victim = HitTestTopmost(p, tolerance: 4f);
@@ -350,9 +423,6 @@ public sealed class MainViewModel : ObservableObject
         History.Execute(new RemoveShapeCommand(Canvas, victim));
     }
 
-    /// <summary>
-    /// Идём с конца — последняя добавленная фигура "выше" по Z
-    /// </summary>
     private IShape? HitTestTopmost(PointF p, float tolerance)
     {
         for (int i = Canvas.Shapes.Count - 1; i >= 0; i--)
@@ -362,8 +432,6 @@ public sealed class MainViewModel : ObservableObject
         }
         return null;
     }
-
-    // ---- Move ----
 
     private void BeginMove(PointF p)
     {
@@ -399,17 +467,16 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    // ---- Eyedropper ----
-
     private void HandleEyedropperClick(PointF screen)
     {
         var svc = ScreenServices;
         if (svc is null) return;
         var c = svc.GetPixel((int)screen.X, (int)screen.Y);
         StrokeColor = c;
-    }
 
-    // ---- Blur (двух-точечный, с захватом региона на отпускании) ----
+        // Отключение после выбора цвета
+        ActiveTool = ToolType.None;
+    }
 
     private void BeginBlur(PointF local, PointF screen)
     {
@@ -462,7 +529,6 @@ public sealed class MainViewModel : ObservableObject
 
         if (preview is null) return;
 
-        // Размеры
         var lx = MathF.Min(_blurStartLocal.X, local.X);
         var ly = MathF.Min(_blurStartLocal.Y, local.Y);
         var lr = MathF.Max(_blurStartLocal.X, local.X);
@@ -478,26 +544,66 @@ public sealed class MainViewModel : ObservableObject
         var svc = ScreenServices;
         if (svc is null || w <= 0 || h <= 0) return;
 
-        if (_liveBlurEnabled && FrameProvider is not null)
-        {
-            var live = new LiveBlurShape(localRect, sx, sy, w, h, _blurSigma, FrameProvider);
-            History.Execute(new AddShapeCommand(Canvas, live));
-            return;
-        }
-
         var pixels = svc.CaptureRegionBgra(sx, sy, w, h);
         if (pixels.Length == 0) return;
 
-        var blur = new BlurShape(localRect, pixels, w, h, _blurSigma);
+        var blur = new BlurShape(localRect, pixels, w, h, BlurMaxSigma);
         History.Execute(new AddShapeCommand(Canvas, blur));
     }
 
-    // ---- Текст ----
+    private string _editOriginalText = string.Empty;
+    private float _editOriginalFontSize = 0;
+    private bool _editIsExisting = false;
+
+    public void BeginEditExisting(TextShape shape)
+    {
+        if (shape is null) return;
+        _editOriginalText = shape.Text;
+        _editOriginalFontSize = shape.FontSize;
+        _editIsExisting = true;
+        EditingText = shape;
+    }
+
+    public void ChangeEditingFontSize(float delta)
+    {
+        var ts = _editingText;
+        if (ts is null) return;
+        var s = ts.FontSize + delta;
+        if (s < 8f) s = 8f;
+        if (s > 256f) s = 256f;
+        ts.FontSize = s;
+        Canvas.UpdatePending();
+    }
 
     public void CommitTextEditing(string text)
     {
         var ts = _editingText;
         if (ts is null) return;
+
+        if (_editIsExisting)
+        {
+            var newText = text ?? string.Empty;
+            var newFontSize = ts.FontSize;
+
+            if (string.IsNullOrEmpty(newText))
+            {
+                ts.Text = _editOriginalText;
+                ts.FontSize = _editOriginalFontSize;
+                Canvas.UpdatePending();
+            }
+            else if (newText != _editOriginalText || newFontSize != _editOriginalFontSize)
+            {
+                ts.Text = _editOriginalText;
+                ts.FontSize = _editOriginalFontSize;
+                History.Execute(new EditTextCommand(Canvas, ts,
+                    _editOriginalText, _editOriginalFontSize,
+                    newText, newFontSize));
+            }
+            ResetEditState();
+            EditingText = null;
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(text))
         {
             History.Undo();
@@ -513,8 +619,41 @@ public sealed class MainViewModel : ObservableObject
     public void CancelTextEditing()
     {
         if (_editingText is null) return;
+
+        if (_editIsExisting)
+        {
+            var ts = _editingText;
+            ts.Text = _editOriginalText;
+            ts.FontSize = _editOriginalFontSize;
+            Canvas.UpdatePending();
+            ResetEditState();
+            EditingText = null;
+            return;
+        }
+
         History.Undo();
         EditingText = null;
+    }
+
+    private void ResetEditState()
+    {
+        _editIsExisting = false;
+        _editOriginalText = string.Empty;
+        _editOriginalFontSize = 0;
+    }
+
+    public TextShape? HitTestTextAt(PointF p, float tolerance = 4f)
+    {
+        for (int i = Canvas.Shapes.Count - 1; i >= 0; i--)
+        {
+            if (Canvas.Shapes[i] is TextShape ts &&
+                !string.IsNullOrWhiteSpace(ts.Text) &&
+                ts.HitTest(p, tolerance))
+            {
+                return ts;
+            }
+        }
+        return null;
     }
 
     public void Clear()
@@ -522,9 +661,4 @@ public sealed class MainViewModel : ObservableObject
         Canvas.Clear();
         History.Clear();
     }
-
-    // ---- Совместимость со старым API ----
-    public void BeginStrokeAt(PointF p) => OnInputDown(p, p);
-    public void ContinueStrokeAt(PointF p) => OnInputMove(p, p);
-    public void EndStrokeAt(PointF p) => OnInputUp(p, p);
 }
