@@ -33,7 +33,7 @@
         <Grid x:Name="ToolbarHost"
               VerticalAlignment="Bottom"
               HorizontalAlignment="Center"
-              Margin="0 0 0 16"
+              Margin="0 0 0 32"
               Background="Transparent"
               MouseLeftButtonDown="ToolbarHost_MouseDown" 
               MouseMove="ToolbarHost_MouseMove" 

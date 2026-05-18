@@ -377,19 +377,9 @@
                 <Button Style="{StaticResource IconControlButtonStyle}"
                         Visibility="{Binding Show_ClipboardTool, Converter={StaticResource BoolToVis}}"
                         Content="{StaticResource ClipboardTool}"
-                        Click="Copy_Click">
-                    <Button.ToolTip>
-                        <ToolTip>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{DynamicResource Tip_Copy}"/>
-                                <TextBlock Text=" [" Foreground="#888" Margin="5 0 0 0"/>
-                                <TextBlock Text="{Binding Settings.Hotkeys[Copy].DisplayText}" 
-                                           Foreground="#3498DB"/>
-                                <TextBlock Text="]" Foreground="#888"/>
-                            </StackPanel>
-                        </ToolTip>
-                    </Button.ToolTip>
-                </Button>
+                        ToolTip="{DynamicResource Tip_Copy}"
+                        Click="Copy_Click"/>
+
 
             </StackPanel>
         </Border>
